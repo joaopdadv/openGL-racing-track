@@ -73,33 +73,33 @@ int main()
 	// set up vertex data (and buffer(s)) and configure vertex attributes
 	// ------------------------------------------------------------------
 	float vertices[] = {
-		-0.5f, -0.5f, -0.5f, 0.0f, 0.0f,
-		0.5f, -0.5f, -0.5f, 1.0f, 0.0f,
-		0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
-		0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
-		-0.5f, 0.5f, -0.5f, 0.0f, 1.0f,
-		-0.5f, -0.5f, -0.5f, 0.0f, 0.0f,
+		// -0.5f, -0.5f, -0.5f, 0.0f, 0.0f,
+		// 0.5f, -0.5f, -0.5f, 1.0f, 0.0f,
+		// 0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
+		// 0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
+		// -0.5f, 0.5f, -0.5f, 0.0f, 1.0f,
+		// -0.5f, -0.5f, -0.5f, 0.0f, 0.0f,
 
-		-0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
-		0.5f, -0.5f, 0.5f, 1.0f, 0.0f,
-		0.5f, 0.5f, 0.5f, 1.0f, 1.0f,
-		0.5f, 0.5f, 0.5f, 1.0f, 1.0f,
-		-0.5f, 0.5f, 0.5f, 0.0f, 1.0f,
-		-0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
+		// -0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
+		// 0.5f, -0.5f, 0.5f, 1.0f, 0.0f,
+		// 0.5f, 0.5f, 0.5f, 1.0f, 1.0f,
+		// 0.5f, 0.5f, 0.5f, 1.0f, 1.0f,
+		// -0.5f, 0.5f, 0.5f, 0.0f, 1.0f,
+		// -0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
 
-		-0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
-		-0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
-		-0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
-		-0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
-		-0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
-		-0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
+		// -0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
+		// -0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
+		// -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
+		// -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
+		// -0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
+		// -0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
 
-		0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
-		0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
-		0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
-		0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
-		0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
-		0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
+		// 0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
+		// 0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
+		// 0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
+		// 0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
+		// 0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
+		// 0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
 
 		-0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
 		0.5f, -0.5f, -0.5f, 1.0f, 1.0f,
@@ -108,12 +108,14 @@ int main()
 		-0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
 		-0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
 
-		-0.5f, 0.5f, -0.5f, 0.0f, 1.0f,
-		0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
-		0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
-		0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
-		-0.5f, 0.5f, 0.5f, 0.0f, 0.0f,
-		-0.5f, 0.5f, -0.5f, 0.0f, 1.0f};
+		// -0.5f, 0.5f, -0.5f, 0.0f, 1.0f,
+		// 0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
+		// 0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
+		// 0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
+		// -0.5f, 0.5f, 0.5f, 0.0f, 0.0f,
+		// -0.5f, 0.5f, -0.5f, 0.0f, 1.0f
+	};
+
 	unsigned int VBO, VAO;
 	glGenVertexArrays(1, &VAO);
 	glGenBuffers(1, &VBO);
@@ -146,7 +148,7 @@ int main()
 	// load image, create texture and generate mipmaps
 	int width, height, nrChannels;
 	stbi_set_flip_vertically_on_load(true); // tell stb_image.h to flip loaded texture's on the y-axis.
-	unsigned char *data = stbi_load("./images/pedra-28.jpg", &width, &height, &nrChannels, 0);
+	unsigned char *data = stbi_load("./images/track.png", &width, &height, &nrChannels, 0);
 	if (data)
 	{
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
@@ -199,7 +201,7 @@ int main()
 		// ------
 		// glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // also clear the depth buffer now!
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // also clear the depth buffer
 
 		// bind textures on corresponding texture units
 		glActiveTexture(GL_TEXTURE0);
@@ -210,21 +212,35 @@ int main()
 		// activate shader
 		ourShader.use();
 
+		// Camera
+		glm::vec3 cameraPos = glm::vec3(1.0f, 1.0f, 1.5f);
+		glm::vec3 cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);
+		glm::vec3 cameraDirection = glm::normalize(cameraPos - cameraTarget);
+		glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
+		glm::vec3 cameraRight = glm::normalize(glm::cross(up, cameraDirection));
+		glm::vec3 cameraUp = glm::cross(cameraDirection, cameraRight);
+
 		// create transformations
 		glm::mat4 model = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
-		glm::mat4 view = glm::mat4(1.0f);
+		// glm::mat4 view = glm::mat4(1.0f);
+		glm::mat4 view = glm::lookAt(cameraPos, cameraDirection, cameraUp);
 		glm::mat4 projection = glm::mat4(1.0f);
-		model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(0.5f, 1.0f, 0.0f));
+
+		// model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(0.5f, 1.0f, 0.0f));
 		// model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(0.0f, -0.5f, 0.0f));
 		// model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(0.5f, 0.5f, -0.5f));
-		view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
+
+		view = glm::translate(view, glm::vec3(0.0f, 0.0f, 0.0f));
 		projection = glm::perspective(glm::radians(45.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+
 		// retrieve the matrix uniform locations
 		unsigned int modelLoc = glGetUniformLocation(ourShader.ID, "model");
 		unsigned int viewLoc = glGetUniformLocation(ourShader.ID, "view");
+
 		// pass them to the shaders (3 different ways)
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, &view[0][0]);
+
 		// note: currently we set the projection matrix each frame, but since the projection matrix rarely changes it's often best practice to set it outside the main loop only once.
 		ourShader.setMat4("projection", projection);
 
