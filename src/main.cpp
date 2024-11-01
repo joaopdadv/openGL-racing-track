@@ -16,19 +16,6 @@ void processInput(GLFWwindow *window);
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
 
-const char *vertexShaderSource = "#version 330 core\n"
-								 "layout (location = 0) in vec3 aPos;\n"
-								 "void main()\n"
-								 "{\n"
-								 "   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
-								 "}\0";
-const char *fragmentShaderSource = "#version 330 core\n"
-								   "out vec4 FragColor;\n"
-								   "void main()\n"
-								   "{\n"
-								   "   FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
-								   "}\n\0";
-
 int main()
 {
 	// glfw: initialize and configure
@@ -73,58 +60,76 @@ int main()
 	// set up vertex data (and buffer(s)) and configure vertex attributes
 	// ------------------------------------------------------------------
 	float vertices[] = {
-		// -0.5f, -0.5f, -0.5f, 0.0f, 0.0f,
-		// 0.5f, -0.5f, -0.5f, 1.0f, 0.0f,
-		// 0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
-		// 0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
-		// -0.5f, 0.5f, -0.5f, 0.0f, 1.0f,
-		// -0.5f, -0.5f, -0.5f, 0.0f, 0.0f,
+		-0.5f, 0.0f, -0.5f, 0.0f, 1.0f, // top left
+		0.5f, 0.0f, -0.5f, 1.0f, 1.0f,	// top right
+		0.5f, 0.0f, 0.5f, 1.0f, 0.0f,	// bottom right
 
-		// -0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
-		// 0.5f, -0.5f, 0.5f, 1.0f, 0.0f,
-		// 0.5f, 0.5f, 0.5f, 1.0f, 1.0f,
-		// 0.5f, 0.5f, 0.5f, 1.0f, 1.0f,
-		// -0.5f, 0.5f, 0.5f, 0.0f, 1.0f,
-		// -0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
-
-		// -0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
-		// -0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
-		// -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
-		// -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
-		// -0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
-		// -0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
-
-		// 0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
-		// 0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
-		// 0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
-		// 0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
-		// 0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
-		// 0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
-
-		-0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
-		0.5f, -0.5f, -0.5f, 1.0f, 1.0f,
-		0.5f, -0.5f, 0.5f, 1.0f, 0.0f,
-		0.5f, -0.5f, 0.5f, 1.0f, 0.0f,
-		-0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
-		-0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
-
-		// -0.5f, 0.5f, -0.5f, 0.0f, 1.0f,
-		// 0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
-		// 0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
-		// 0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
-		// -0.5f, 0.5f, 0.5f, 0.0f, 0.0f,
-		// -0.5f, 0.5f, -0.5f, 0.0f, 1.0f
+		-0.5f, 0.0f, -0.5f, 0.0f, 1.0f, // top left
+		0.5f, 0.0f, 0.5f, 1.0f, 0.0f,	// bottom right
+		-0.5f, 0.0f, 0.5f, 0.0f, 0.0f,	// bottom left
 	};
 
-	unsigned int VBO, VAO;
-	glGenVertexArrays(1, &VAO);
+	float carVertices[] = {
+		-0.2f, -0.2f, -0.2f, 0.0f, 0.0f,
+		0.2f, -0.2f, -0.2f, 1.0f, 0.0f,
+		0.2f, 0.2f, -0.2f, 1.0f, 1.0f,
+		0.2f, 0.2f, -0.2f, 1.0f, 1.0f,
+		-0.2f, 0.2f, -0.2f, 0.0f, 1.0f,
+		-0.2f, -0.2f, -0.2f, 0.0f, 0.0f,
+
+		-0.2f, -0.2f, 0.2f, 0.0f, 0.0f,
+		0.2f, -0.2f, 0.2f, 1.0f, 0.0f,
+		0.2f, 0.2f, 0.2f, 1.0f, 1.0f,
+		0.2f, 0.2f, 0.2f, 1.0f, 1.0f,
+		-0.2f, 0.2f, 0.2f, 0.0f, 1.0f,
+		-0.2f, -0.2f, 0.2f, 0.0f, 0.0f,
+
+		-0.2f, 0.2f, 0.2f, 1.0f, 0.0f,
+		-0.2f, 0.2f, -0.2f, 1.0f, 1.0f,
+		-0.2f, -0.2f, -0.2f, 0.0f, 1.0f,
+		-0.2f, -0.2f, -0.2f, 0.0f, 1.0f,
+		-0.2f, -0.2f, 0.2f, 0.0f, 0.0f,
+		-0.2f, 0.2f, 0.2f, 1.0f, 0.0f,
+
+		0.2f, 0.2f, 0.2f, 1.0f, 0.0f,
+		0.2f, 0.2f, -0.2f, 1.0f, 1.0f,
+		0.2f, -0.2f, -0.2f, 0.0f, 1.0f,
+		0.2f, -0.2f, -0.2f, 0.0f, 1.0f,
+		0.2f, -0.2f, 0.2f, 0.0f, 0.0f,
+		0.2f, 0.2f, 0.2f, 1.0f, 0.0f,
+
+		-0.2f, -0.2f, -0.2f, 0.0f, 1.0f,
+		0.2f, -0.2f, -0.2f, 1.0f, 1.0f,
+		0.2f, -0.2f, 0.2f, 1.0f, 0.0f,
+		0.2f, -0.2f, 0.2f, 1.0f, 0.0f,
+		-0.2f, -0.2f, 0.2f, 0.0f, 0.0f,
+		-0.2f, -0.2f, -0.2f, 0.0f, 1.0f,
+
+		-0.2f, 0.2f, -0.2f, 0.0f, 1.0f,
+		0.2f, 0.2f, -0.2f, 1.0f, 1.0f,
+		0.2f, 0.2f, 0.2f, 1.0f, 0.0f,
+		0.2f, 0.2f, 0.2f, 1.0f, 0.0f,
+		-0.2f, 0.2f, 0.2f, 0.0f, 0.0f,
+		-0.2f, 0.2f, -0.2f, 0.0f, 1.0f};
+
+	unsigned int VBO, VAO1, VAO2;
+	glGenVertexArrays(1, &VAO1);
+	glGenVertexArrays(1, &VAO2);
 	glGenBuffers(1, &VBO);
 
-	glBindVertexArray(VAO);
-
+	glBindVertexArray(VAO1);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+	// position attribute
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)0);
+	glEnableVertexAttribArray(0);
+	// texture coord attribute
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)(3 * sizeof(float)));
+	glEnableVertexAttribArray(1);
 
+	glBindVertexArray(VAO2);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(carVertices), carVertices, GL_STATIC_DRAW);
 	// position attribute
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)0);
 	glEnableVertexAttribArray(0);
@@ -148,7 +153,7 @@ int main()
 	// load image, create texture and generate mipmaps
 	int width, height, nrChannels;
 	stbi_set_flip_vertically_on_load(true); // tell stb_image.h to flip loaded texture's on the y-axis.
-	unsigned char *data = stbi_load("./images/pedra-28.jpg", &width, &height, &nrChannels, 0);
+	unsigned char *data = stbi_load("./images/gremio.jpg", &width, &height, &nrChannels, 0);
 	if (data)
 	{
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
@@ -187,8 +192,10 @@ int main()
 		ourShader.use();
 
 		// Camera
-		glm::vec3 cameraPos = glm::vec3(1.0f, 0.5f, 1.0f);
-		glm::vec3 cameraTarget = glm::vec3(0.0f, 0.25f, 0.0f);
+		glm::vec3 cameraPos = glm::vec3(1.0f, 1.5f, 1.0f);
+		// glm::vec3 cameraPos = glm::vec3(0.0f, 1.0f, 1.0f);
+		glm::vec3 cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);
+
 		glm::vec3 cameraDirection = glm::normalize(cameraPos - cameraTarget);
 		glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
 		glm::vec3 cameraRight = glm::normalize(glm::cross(up, cameraDirection));
@@ -214,12 +221,17 @@ int main()
 		// pass them to the shaders (3 different ways)
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, &view[0][0]);
-
 		// note: currently we set the projection matrix each frame, but since the projection matrix rarely changes it's often best practice to set it outside the main loop only once.
 		ourShader.setMat4("projection", projection);
-
 		// render box
-		glBindVertexArray(VAO);
+		glBindVertexArray(VAO1);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+
+		// Desenhe o segundo quadrado
+		glm::mat4 model2 = glm::mat4(1.0f);
+		model2 = glm::translate(model2, glm::vec3(0.75f, 0.0f, 0.0f)); // Move o quadrado para a direita
+		ourShader.setMat4("model", model2);
+		glBindVertexArray(VAO2);
 		glDrawArrays(GL_TRIANGLES, 0, 36);
 
 		// glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
@@ -230,7 +242,7 @@ int main()
 
 	// optional: de-allocate all resources once they've outlived their purpose:
 	// ------------------------------------------------------------------------
-	glDeleteVertexArrays(1, &VAO);
+	glDeleteVertexArrays(1, &VAO1);
 	glDeleteBuffers(1, &VBO);
 
 	// glfw: terminate, clearing all previously allocated GLFW resources.
