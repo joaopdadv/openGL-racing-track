@@ -1,141 +1,210 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <math.h>
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
+#include <Shader.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
-#include <Shader.h>
-#include <iostream>
-#include <stdio.h>
 
-void framebuffer_size_callback(GLFWwindow *window, int width, int height);
-void processInput(GLFWwindow *window);
+// Funções para compilar shaders
+GLuint compileShader(const char* vertexSource, const char* fragmentSource);
+void checkShaderCompileStatus(GLuint shader);
+void checkProgramLinkStatus(GLuint program);
+// Processar eventos de teclado
+void processInput(GLFWwindow *window, float *x, float *y, float *z);
 
-// settings
-const unsigned int SCR_WIDTH = 800;
-const unsigned int SCR_HEIGHT = 600;
+// Shaders (cada objeto terá um shader próprio)
+const char* vertexShaderSource = "#version 330 core\n"
+    "layout(location = 0) in vec3 position;\n"
+    "uniform mat4 model;\n"
+    "uniform mat4 view;\n"
+    "uniform mat4 projection;\n"
+    "void main() {\n"
+    "   gl_Position = projection * view * model * vec4(position, 1.0f);\n"
+    "}\n";
 
-int main()
-{
-	// glfw: initialize and configure
-	// ------------------------------
-	glfwInit();
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+// const char* fragmentShaderSource1 = "#version 330 core\n"
+//     "out vec4 color;\n"
+//     "void main() {\n"
+//     "   color = vec4(1.0, 0.0, 0.0, 0.0); // Vermelho\n"
+//     "}\n";
 
-#ifdef __APPLE__
-	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-#endif
+// const char* fragmentShaderSource2 = "#version 330 core\n"
+//     "out vec4 color;\n"
+//     "void main() {\n"
+//     "   color = vec4(0.0, 1.0, 0.0, 1.0); // Verde\n"
+//     "}\n";
 
-	// glfw window creation
-	// --------------------
-	GLFWwindow *window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "LearnOpenGL", NULL, NULL);
-	if (window == NULL)
+// const char* fragmentShaderSource3 = "#version 330 core\n"
+//     "out vec4 color;\n"
+//     "void main() {\n"
+//     "   color = vec4(0.0, 0.0, 1.0, 1.0); // Azul\n"
+//     "}\n";
+
+const char* fragmentShaderSource4 = "#version 330 core
+	out vec4 FragColor;
+	in vec2 TexCoord;
+	// texture samplers
+	uniform sampler2D texture1;
+	void main()
 	{
-		std::cout << "Failed to create GLFW window" << std::endl;
-		glfwTerminate();
-		return -1;
+		FragColor = vec4(texture(texture1, TexCoord).rgb, 1.0);
 	}
-	glfwMakeContextCurrent(window);
-	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+";
 
+
+// Shader ourShader("./shaders/vertex.glsl", "./shaders/fragment.glsl");
+
+// Dados dos objetos (cubo, pirâmide, tetraedro)
+float cubeVertices[] = {
+        -0.5f, -0.5f, -0.5f,  // fundo
+         0.5f, -0.5f, -0.5f,
+         0.5f,  0.5f, -0.5f,
+         0.5f,  0.5f, -0.5f,
+        -0.5f,  0.5f, -0.5f,
+        -0.5f, -0.5f, -0.5f,
+
+        -0.5f, -0.5f,  0.5f,  // frente
+         0.5f, -0.5f,  0.5f,
+         0.5f,  0.5f,  0.5f,
+         0.5f,  0.5f,  0.5f,
+        -0.5f,  0.5f,  0.5f,
+        -0.5f, -0.5f,  0.5f,
+
+        -0.5f,  0.5f,  0.5f,  // lateral esquerda
+        -0.5f,  0.5f, -0.5f,
+        -0.5f, -0.5f, -0.5f,
+        -0.5f, -0.5f, -0.5f,
+        -0.5f, -0.5f,  0.5f,
+        -0.5f,  0.5f,  0.5f,
+
+         0.5f,  0.5f,  0.5f,  // lateral direita
+         0.5f,  0.5f, -0.5f,
+         0.5f, -0.5f, -0.5f,
+         0.5f, -0.5f, -0.5f,
+         0.5f, -0.5f,  0.5f,
+         0.5f,  0.5f,  0.5f,
+
+        -0.5f, -0.5f, -0.5f,  // fundo
+         0.5f, -0.5f, -0.5f,
+         0.5f, -0.5f,  0.5f,
+         0.5f, -0.5f,  0.5f,
+        -0.5f, -0.5f,  0.5f,
+        -0.5f, -0.5f, -0.5f,
+
+        -0.5f,  0.5f, -0.5f,  // topo
+         0.5f,  0.5f, -0.5f,
+         0.5f,  0.5f,  0.5f,
+         0.5f,  0.5f,  0.5f,
+        -0.5f,  0.5f,  0.5f,
+        -0.5f,  0.5f, -0.5f
+    };
+
+
+float pyramidVertices[] = {
+    0.0f,  0.5f,  0.0f,  // Topo
+   -0.5f, -0.5f, -0.5f,  // Base
+    0.5f, -0.5f, -0.5f,  // Base
+    0.5f, -0.5f,  0.5f,  // Base
+   -0.5f, -0.5f,  0.5f   // Base
+};
+
+float tetrahedronVertices[] = {
+    0.0f,  0.5f,  0.0f,
+   -0.5f, -0.5f,  0.5f,
+    0.5f, -0.5f,  0.5f,
+    0.0f, -0.5f, -0.5f
+};
+
+float groundVertices[] = {
+   -5.0f, -0.6f,  5.0f, 0.0f, 0.0f,
+    5.0f, -0.6f, -5.0f, 1.0f, 1.0f,
+    5.0f, -0.6f,  5.0f, 1.0f, 0.0f,
+   -5.0f, -0.6f,  5.0f, 0.0f, 0.0f,
+   -5.0f, -0.6f, -5.0f, 0.0f, 1.0f,
+    5.0f, -0.6f, -5.0f, 1.0f, 1.0f,
+};
+
+int main() {
+
+   float x = 0.0f;
+   float y = 0.0f;
+   float z = -5.0f;
+
+    // Inicializar GLFW
+    if (!glfwInit()) {
+        fprintf(stderr, "Falha ao inicializar GLFW\n");
+        return -1;
+    }
+
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+    GLFWwindow* window = glfwCreateWindow(800, 600, "Três Objetos com Shaders Diferentes (e o chão)", NULL, NULL);
+    if (!window) {
+        fprintf(stderr, "Falha ao criar a janela GLFW\n");
+        glfwTerminate();
+        return -1;
+    }
+    glfwMakeContextCurrent(window);
+
+    // Inicializar GLEW
 	// glad: load all OpenGL function pointers
 	// ---------------------------------------
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
 	{
-		std::cout << "Failed to initialize GLAD" << std::endl;
+		// std::cout << "Failed to initialize GLAD" << std::endl;
 		return -1;
 	}
 
-	// configure global opengl state
-	// -----------------------------
-	glEnable(GL_DEPTH_TEST);
+    // Compilar os shaders para cada objeto
+    // GLuint shaderProgram1 = compileShader(vertexShaderSource, fragmentShaderSource1);
+    // GLuint shaderProgram2 = compileShader(vertexShaderSource, fragmentShaderSource2);
+    // GLuint shaderProgram3 = compileShader(vertexShaderSource, fragmentShaderSource3);
+    // GLuint shaderProgram4 = compileShader(vertexShaderSource, fragmentShaderSource4);
 
-	// build and compile our shader zprogram
-	// ------------------------------------
-	Shader ourShader("./shaders/vertex.glsl", "./shaders/fragment.glsl");
+    // Configurar buffers de vértices para cada objeto
+    GLuint VBOs[4], VAOs[4];
+    glGenVertexArrays(4, VAOs);
+    glGenBuffers(4, VBOs);
 
-	// set up vertex data (and buffer(s)) and configure vertex attributes
-	// ------------------------------------------------------------------
-	float vertices[] = {
-		-0.5f, 0.0f, -0.5f, 0.0f, 1.0f, // top left
-		0.5f, 0.0f, -0.5f, 1.0f, 1.0f,	// top right
-		0.5f, 0.0f, 0.5f, 1.0f, 0.0f,	// bottom right
+    // // Cubo
+    // glBindVertexArray(VAOs[0]);
+    // glBindBuffer(GL_ARRAY_BUFFER, VBOs[0]);
+    // glBufferData(GL_ARRAY_BUFFER, sizeof(cubeVertices), cubeVertices, GL_STATIC_DRAW);
+    // glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    // glEnableVertexAttribArray(0);
 
-		-0.5f, 0.0f, -0.5f, 0.0f, 1.0f, // top left
-		0.5f, 0.0f, 0.5f, 1.0f, 0.0f,	// bottom right
-		-0.5f, 0.0f, 0.5f, 0.0f, 0.0f,	// bottom left
-	};
+    // // Pirâmide
+    // glBindVertexArray(VAOs[1]);
+    // glBindBuffer(GL_ARRAY_BUFFER, VBOs[1]);
+    // glBufferData(GL_ARRAY_BUFFER, sizeof(pyramidVertices), pyramidVertices, GL_STATIC_DRAW);
+    // glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    // glEnableVertexAttribArray(0);
 
-	float carVertices[] = {
-		-0.2f, -0.2f, -0.2f, 0.0f, 0.0f,
-		0.2f, -0.2f, -0.2f, 1.0f, 0.0f,
-		0.2f, 0.2f, -0.2f, 1.0f, 1.0f,
-		0.2f, 0.2f, -0.2f, 1.0f, 1.0f,
-		-0.2f, 0.2f, -0.2f, 0.0f, 1.0f,
-		-0.2f, -0.2f, -0.2f, 0.0f, 0.0f,
+    // // Tetraedro
+    // glBindVertexArray(VAOs[2]);
+    // glBindBuffer(GL_ARRAY_BUFFER, VBOs[2]);
+    // glBufferData(GL_ARRAY_BUFFER, sizeof(tetrahedronVertices), tetrahedronVertices, GL_STATIC_DRAW);
+    // glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    // glEnableVertexAttribArray(0);
 
-		-0.2f, -0.2f, 0.2f, 0.0f, 0.0f,
-		0.2f, -0.2f, 0.2f, 1.0f, 0.0f,
-		0.2f, 0.2f, 0.2f, 1.0f, 1.0f,
-		0.2f, 0.2f, 0.2f, 1.0f, 1.0f,
-		-0.2f, 0.2f, 0.2f, 0.0f, 1.0f,
-		-0.2f, -0.2f, 0.2f, 0.0f, 0.0f,
-
-		-0.2f, 0.2f, 0.2f, 1.0f, 0.0f,
-		-0.2f, 0.2f, -0.2f, 1.0f, 1.0f,
-		-0.2f, -0.2f, -0.2f, 0.0f, 1.0f,
-		-0.2f, -0.2f, -0.2f, 0.0f, 1.0f,
-		-0.2f, -0.2f, 0.2f, 0.0f, 0.0f,
-		-0.2f, 0.2f, 0.2f, 1.0f, 0.0f,
-
-		0.2f, 0.2f, 0.2f, 1.0f, 0.0f,
-		0.2f, 0.2f, -0.2f, 1.0f, 1.0f,
-		0.2f, -0.2f, -0.2f, 0.0f, 1.0f,
-		0.2f, -0.2f, -0.2f, 0.0f, 1.0f,
-		0.2f, -0.2f, 0.2f, 0.0f, 0.0f,
-		0.2f, 0.2f, 0.2f, 1.0f, 0.0f,
-
-		-0.2f, -0.2f, -0.2f, 0.0f, 1.0f,
-		0.2f, -0.2f, -0.2f, 1.0f, 1.0f,
-		0.2f, -0.2f, 0.2f, 1.0f, 0.0f,
-		0.2f, -0.2f, 0.2f, 1.0f, 0.0f,
-		-0.2f, -0.2f, 0.2f, 0.0f, 0.0f,
-		-0.2f, -0.2f, -0.2f, 0.0f, 1.0f,
-
-		-0.2f, 0.2f, -0.2f, 0.0f, 1.0f,
-		0.2f, 0.2f, -0.2f, 1.0f, 1.0f,
-		0.2f, 0.2f, 0.2f, 1.0f, 0.0f,
-		0.2f, 0.2f, 0.2f, 1.0f, 0.0f,
-		-0.2f, 0.2f, 0.2f, 0.0f, 0.0f,
-		-0.2f, 0.2f, -0.2f, 0.0f, 1.0f};
-
-	unsigned int VBO, VAO1, VAO2;
-	glGenVertexArrays(1, &VAO1);
-	glGenVertexArrays(1, &VAO2);
-	glGenBuffers(1, &VBO);
-
-	glBindVertexArray(VAO1);
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-	// position attribute
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)0);
-	glEnableVertexAttribArray(0);
-	// texture coord attribute
+    // Solo
+    glBindVertexArray(VAOs[3]);
+    glBindBuffer(GL_ARRAY_BUFFER, VBOs[3]);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(groundVertices), groundVertices, GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
 	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
 
-	glBindVertexArray(VAO2);
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(carVertices), carVertices, GL_STATIC_DRAW);
-	// position attribute
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)0);
-	glEnableVertexAttribArray(0);
-	// texture coord attribute
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)(3 * sizeof(float)));
-	glEnableVertexAttribArray(1);
+    glEnable(GL_DEPTH_TEST);
 
 	// load and create a texture
 	// -------------------------
@@ -153,7 +222,7 @@ int main()
 	// load image, create texture and generate mipmaps
 	int width, height, nrChannels;
 	stbi_set_flip_vertically_on_load(true); // tell stb_image.h to flip loaded texture's on the y-axis.
-	unsigned char *data = stbi_load("./images/gremio.jpg", &width, &height, &nrChannels, 0);
+	unsigned char *data = stbi_load("./images/track2.jpg", &width, &height, &nrChannels, 0);
 	if (data)
 	{
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
@@ -165,105 +234,165 @@ int main()
 	}
 	stbi_image_free(data);
 
-	// tell opengl for each sampler to which texture unit it belongs to (only has to be done once)
-	// -------------------------------------------------------------------------------------------
-	ourShader.use();
-	ourShader.setInt("texture1", 0);
+    // Loop de renderização
+    while (!glfwWindowShouldClose(window)) {
 
-	// render loop
-	// -----------
-	while (!glfwWindowShouldClose(window))
-	{
-		// input
-		// -----
-		processInput(window);
+        // Atender os eventos
+        processInput(window, &x, &y, &z);
 
-		// render
-		// ------
-		// glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // also clear the depth buffer
+        // Limpar a tela
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		// bind textures on corresponding texture units
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, texture1);
+        // Renderizar cada objeto com seu shader
 
-		// activate shader
-		ourShader.use();
+        glm::mat4 model         = glm::mat4(1.0f);
+        glm::mat4 view          = glm::mat4(1.0f);
+        glm::mat4 projection    = glm::mat4(1.0f);
+        view  = glm::translate(view, glm::vec3(x, y, z));
+        projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
 
-		// Camera
-		glm::vec3 cameraPos = glm::vec3(1.0f, 1.5f, 1.0f);
-		// glm::vec3 cameraPos = glm::vec3(0.0f, 1.0f, 1.0f);
-		glm::vec3 cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);
+        // Solo
+        model = glm::mat4(1.0f);
+        glUseProgram(shaderProgram4);
+        glUniformMatrix4fv(glGetUniformLocation(shaderProgram1, "model"), 1, GL_FALSE, glm::value_ptr(model));
+        glUniformMatrix4fv(glGetUniformLocation(shaderProgram1, "view"), 1, GL_FALSE, glm::value_ptr(view));
+        glUniformMatrix4fv(glGetUniformLocation(shaderProgram1, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+        glBindVertexArray(VAOs[3]);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
 
-		glm::vec3 cameraDirection = glm::normalize(cameraPos - cameraTarget);
-		glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
-		glm::vec3 cameraRight = glm::normalize(glm::cross(up, cameraDirection));
-		glm::vec3 cameraUp = glm::cross(cameraDirection, cameraRight);
+        // // Cubo
+        // model = glm::translate(model, glm::vec3(-1.5f, 0.0f, 0.0f));
+        // glUseProgram(shaderProgram1);
+        // glUniformMatrix4fv(glGetUniformLocation(shaderProgram1, "model"), 1, GL_FALSE, glm::value_ptr(model));
+        // glUniformMatrix4fv(glGetUniformLocation(shaderProgram1, "view"), 1, GL_FALSE, glm::value_ptr(view));
+        // glUniformMatrix4fv(glGetUniformLocation(shaderProgram1, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+        // glBindVertexArray(VAOs[0]);
+        // glDrawArrays(GL_TRIANGLES, 0, 36);
 
-		// create transformations
-		glm::mat4 model = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
-		// glm::mat4 view = glm::mat4(1.0f);
-		glm::mat4 view = glm::lookAt(cameraPos, cameraDirection, cameraUp);
-		glm::mat4 projection = glm::mat4(1.0f);
+        // // Pirâmide
+        // model = glm::mat4(1.0f);
+        // glUseProgram(shaderProgram2);
+        // glUniformMatrix4fv(glGetUniformLocation(shaderProgram1, "model"), 1, GL_FALSE, glm::value_ptr(model));
+        // glUniformMatrix4fv(glGetUniformLocation(shaderProgram1, "view"), 1, GL_FALSE, glm::value_ptr(view));
+        // glUniformMatrix4fv(glGetUniformLocation(shaderProgram1, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+        // glBindVertexArray(VAOs[1]);
+        // glDrawArrays(GL_TRIANGLE_FAN, 0, 5);
 
-		// model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(0.5f, 1.0f, 0.0f));
-		// model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(0.0f, -0.5f, 0.0f));
-		// model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(0.5f, 0.5f, -0.5f));
+        // // Tetraedro
+        // model = glm::translate(model, glm::vec3(1.5f, 0.0f, 0.0f));
+        // glUseProgram(shaderProgram3);
+        // glUniformMatrix4fv(glGetUniformLocation(shaderProgram1, "model"), 1, GL_FALSE, glm::value_ptr(model));
+        // glUniformMatrix4fv(glGetUniformLocation(shaderProgram1, "view"), 1, GL_FALSE, glm::value_ptr(view));
+        // glUniformMatrix4fv(glGetUniformLocation(shaderProgram1, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+        // glBindVertexArray(VAOs[2]);
+        // glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
-		// view = glm::translate(view, glm::vec3(0.0f, 0.0f, 0.0f));
-		projection = glm::perspective(glm::radians(45.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
 
-		// retrieve the matrix uniform locations
-		unsigned int modelLoc = glGetUniformLocation(ourShader.ID, "model");
-		unsigned int viewLoc = glGetUniformLocation(ourShader.ID, "view");
 
-		// pass them to the shaders (3 different ways)
-		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, &view[0][0]);
-		// note: currently we set the projection matrix each frame, but since the projection matrix rarely changes it's often best practice to set it outside the main loop only once.
-		ourShader.setMat4("projection", projection);
-		// render box
-		glBindVertexArray(VAO1);
-		glDrawArrays(GL_TRIANGLES, 0, 6);
+        // Trocar os buffers da janela
+        glfwSwapBuffers(window);
+        glfwPollEvents();
+    }
 
-		// Desenhe o segundo quadrado
-		glm::mat4 model2 = glm::mat4(1.0f);
-		model2 = glm::translate(model2, glm::vec3(0.75f, 0.0f, 0.0f)); // Move o quadrado para a direita
-		ourShader.setMat4("model", model2);
-		glBindVertexArray(VAO2);
-		glDrawArrays(GL_TRIANGLES, 0, 36);
+    // Limpar recursos
+    glDeleteVertexArrays(3, VAOs);
+    glDeleteBuffers(3, VBOs);
+    glDeleteProgram(shaderProgram1);
+    glDeleteProgram(shaderProgram2);
+    glDeleteProgram(shaderProgram3);
 
-		// glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
-		// -------------------------------------------------------------------------------
-		glfwSwapBuffers(window);
-		glfwPollEvents();
-	}
+    glfwTerminate();
+    return 0;
+}
 
-	// optional: de-allocate all resources once they've outlived their purpose:
-	// ------------------------------------------------------------------------
-	glDeleteVertexArrays(1, &VAO1);
-	glDeleteBuffers(1, &VBO);
+// Funções auxiliares
+GLuint compileShader(const char* vertexSource, const char* fragmentSource) {
+    GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
+    glShaderSource(vertexShader, 1, &vertexSource, NULL);
+    glCompileShader(vertexShader);
+    checkShaderCompileStatus(vertexShader);
 
-	// glfw: terminate, clearing all previously allocated GLFW resources.
-	// ------------------------------------------------------------------
-	glfwTerminate();
-	return 0;
+    GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+    glShaderSource(fragmentShader, 1, &fragmentSource, NULL);
+    glCompileShader(fragmentShader);
+    checkShaderCompileStatus(fragmentShader);
+
+    GLuint shaderProgram = glCreateProgram();
+    glAttachShader(shaderProgram, vertexShader);
+    glAttachShader(shaderProgram, fragmentShader);
+    glLinkProgram(shaderProgram);
+    checkProgramLinkStatus(shaderProgram);
+
+    glDeleteShader(vertexShader);
+    glDeleteShader(fragmentShader);
+
+    return shaderProgram;
+}
+
+void checkShaderCompileStatus(GLuint shader) {
+    int success;
+    glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
+    if (!success) {
+        char infoLog[512];
+        glGetShaderInfoLog(shader, 512, NULL, infoLog);
+        fprintf(stderr, "Erro de compilação de shader: %s\n", infoLog);
+    }
+}
+
+void checkProgramLinkStatus(GLuint program) {
+    int success;
+    glGetProgramiv(program, GL_LINK_STATUS, &success);
+    if (!success) {
+        char infoLog[512];
+        glGetProgramInfoLog(program, 512, NULL, infoLog);
+        fprintf(stderr, "Erro ao linkar programa: %s\n", infoLog);
+    }
 }
 
 // process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
 // ---------------------------------------------------------------------------------------------------------
-void processInput(GLFWwindow *window)
+void processInput(GLFWwindow *window, float *x, float *y, float *z)
 {
-	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-		glfwSetWindowShouldClose(window, true);
-}
+    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+        glfwSetWindowShouldClose(window, true);
 
-// glfw: whenever the window size changed (by OS or user resize) this callback function executes
-// ---------------------------------------------------------------------------------------------
-void framebuffer_size_callback(GLFWwindow *window, int width, int height)
-{
-	// make sure the viewport matches the new window dimensions; note that width and
-	// height will be significantly larger than specified on retina displays.
-	glViewport(0, 0, width, height);
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
+        *x+=0.1f;
+        printf("(%.3f,%.3f,%.3f\n", *x, *y, *z);
+    }
+
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
+        *x-=0.1f;
+        printf("(%.3f,%.3f,%.3f\n", *x, *y, *z);
+    }
+
+
+    if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
+        *y+=0.1f;
+        printf("(%.3f,%.3f,%.3f\n", *x, *y, *z);
+    }
+
+    if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
+        *y-=0.1f;
+        printf("(%.3f,%.3f,%.3f\n", *x, *y, *z);
+    }
+
+
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+        *z+=0.1f;
+        printf("(%.3f,%.3f,%.3f\n", *x, *y, *z);
+    }
+
+
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+        *z-=0.1f;
+        printf("(%.3f,%.3f,%.3f\n", *x, *y, *z);
+    }
+
+    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
+        *x = 0.0f;
+        *y = 0.0f;
+        *z = -5.0f;
+        printf("RESET\n(%.3f,%.3f,%.3f\n", *x, *y, *z);
+    }
 }
