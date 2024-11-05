@@ -17,17 +17,22 @@ void processInput(GLFWwindow *window, float *x, float *y, float *z);
 
 const char *vertexShaderSource = "#version 330 core\n"
 								 "layout(location = 0) in vec3 position;\n"
+								 "layout (location = 1) in vec2 aTexCoord;\n"
+								 "out vec2 TexCoord;\n"
 								 "uniform mat4 model;\n"
 								 "uniform mat4 view;\n"
 								 "uniform mat4 projection;\n"
 								 "void main() {\n"
 								 "   gl_Position = projection * view * model * vec4(position, 1.0f);\n"
+								 "   TexCoord = vec2(aTexCoord.x, aTexCoord.y);\n"
 								 "}\n";
 
 const char *fragmentShaderSource4 = "#version 330 core\n"
 									"out vec4 color;\n"
+									"in vec2 TexCoord;\n"
+									"uniform sampler2D texture1;\n"
 									"void main() {\n"
-									"   color = vec4(1.0, 1.0, 0.0, 0.0); // Amarelo\n"
+									"   color = vec4(texture(texture1, TexCoord).rgb, 1.0);\n"
 									"}\n";
 
 // settings
@@ -35,12 +40,12 @@ const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
 
 float groundVertices[] = {
-	-5.0f, -0.6f, 5.0f,
-	5.0f, -0.6f, -5.0f,
-	5.0f, -0.6f, 5.0f,
-	-5.0f, -0.6f, 5.0f,
-	-5.0f, -0.6f, -5.0f,
-	5.0f, -0.6f, -5.0f};
+	-5.0f, -0.6f, 5.0f, 0.0f, 0.0f,
+	5.0f, -0.6f, -5.0f, 1.0f, 1.0f,
+	5.0f, -0.6f, 5.0f, 1.0f, 0.0f,
+	-5.0f, -0.6f, 5.0f, 0.0f, 0.0f,
+	-5.0f, -0.6f, -5.0f, 0.0f, 1.0f,
+	5.0f, -0.6f, -5.0f, 1.0f, 1.0f};
 
 int main()
 {
@@ -82,8 +87,38 @@ int main()
 	glBindVertexArray(VAO1);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO1);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(groundVertices), groundVertices, GL_STATIC_DRAW);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)0);
 	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)(3 * sizeof(float)));
+	glEnableVertexAttribArray(1);
+
+	// load and create a texture
+	// -------------------------
+	unsigned int texture1;
+	// texture 1
+	// ---------
+	glGenTextures(1, &texture1);
+	glBindTexture(GL_TEXTURE_2D, texture1);
+	// set the texture wrapping parameters
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	// set texture filtering parameters
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	// load image, create texture and generate mipmaps
+	int width, height, nrChannels;
+	stbi_set_flip_vertically_on_load(true); // tell stb_image.h to flip loaded texture's on the y-axis.
+	unsigned char *data = stbi_load("./images/track2.jpg", &width, &height, &nrChannels, 0);
+	if (data)
+	{
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+		glGenerateMipmap(GL_TEXTURE_2D);
+	}
+	else
+	{
+		std::cout << "Failed to load texture aaaaa" << std::endl;
+	}
+	stbi_image_free(data);
 
 	glEnable(GL_DEPTH_TEST);
 
@@ -100,6 +135,9 @@ int main()
 		glm::mat4 projection = glm::mat4(1.0f);
 		view = glm::translate(view, glm::vec3(x, y, z));
 		projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
+
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, texture1);
 
 		model = glm::mat4(1.0f);
 		glUseProgram(shaderProgram4);
