@@ -1,5 +1,7 @@
 set -xe
 
+clear
+
 mkdir -p build/Debug
 
 # arch64

@@ -27,13 +27,19 @@ const char *vertexShaderSource = "#version 330 core\n"
 								 "   TexCoord = vec2(aTexCoord.x, aTexCoord.y);\n"
 								 "}\n";
 
-const char *fragmentShaderSource4 = "#version 330 core\n"
-									"out vec4 color;\n"
-									"in vec2 TexCoord;\n"
-									"uniform sampler2D texture1;\n"
-									"void main() {\n"
-									"   color = vec4(texture(texture1, TexCoord).rgb, 1.0);\n"
-									"}\n";
+const char *fragmentShaderTrack = "#version 330 core\n"
+								  "out vec4 color;\n"
+								  "in vec2 TexCoord;\n"
+								  "uniform sampler2D texture1;\n"
+								  "void main() {\n"
+								  "   color = vec4(texture(texture1, TexCoord).rgb, 1.0);\n"
+								  "}\n";
+
+const char *fragmentShaderCar = "#version 330 core\n"
+								"out vec4 color;\n"
+								"void main() {\n"
+								"   color = vec4(0.0, 0.0, 1.0, 1.0); // Azul\n"
+								"}\n";
 
 // settings
 const unsigned int SCR_WIDTH = 800;
@@ -46,6 +52,51 @@ float groundVertices[] = {
 	-5.0f, -0.6f, 5.0f, 0.0f, 0.0f,
 	-5.0f, -0.6f, -5.0f, 0.0f, 1.0f,
 	5.0f, -0.6f, -5.0f, 1.0f, 1.0f};
+
+// Ainda é um cubo
+// TODO: modelar carro
+float carVertices[] = {
+	-0.5f, -0.5f, -0.5f, // fundo
+	0.5f, -0.5f, -0.5f,
+	0.5f, 0.5f, -0.5f,
+	0.5f, 0.5f, -0.5f,
+	-0.5f, 0.5f, -0.5f,
+	-0.5f, -0.5f, -0.5f,
+
+	-0.5f, -0.5f, 0.5f, // frente
+	0.5f, -0.5f, 0.5f,
+	0.5f, 0.5f, 0.5f,
+	0.5f, 0.5f, 0.5f,
+	-0.5f, 0.5f, 0.5f,
+	-0.5f, -0.5f, 0.5f,
+
+	-0.5f, 0.5f, 0.5f, // lateral esquerda
+	-0.5f, 0.5f, -0.5f,
+	-0.5f, -0.5f, -0.5f,
+	-0.5f, -0.5f, -0.5f,
+	-0.5f, -0.5f, 0.5f,
+	-0.5f, 0.5f, 0.5f,
+
+	0.5f, 0.5f, 0.5f, // lateral direita
+	0.5f, 0.5f, -0.5f,
+	0.5f, -0.5f, -0.5f,
+	0.5f, -0.5f, -0.5f,
+	0.5f, -0.5f, 0.5f,
+	0.5f, 0.5f, 0.5f,
+
+	-0.5f, -0.5f, -0.5f, // fundo
+	0.5f, -0.5f, -0.5f,
+	0.5f, -0.5f, 0.5f,
+	0.5f, -0.5f, 0.5f,
+	-0.5f, -0.5f, 0.5f,
+	-0.5f, -0.5f, -0.5f,
+
+	-0.5f, 0.5f, -0.5f, // topo
+	0.5f, 0.5f, -0.5f,
+	0.5f, 0.5f, 0.5f,
+	0.5f, 0.5f, 0.5f,
+	-0.5f, 0.5f, 0.5f,
+	-0.5f, 0.5f, -0.5f};
 
 int main()
 {
@@ -78,21 +129,33 @@ int main()
 		return -1;
 	}
 
-	GLuint shaderProgram4 = compileShader(vertexShaderSource, fragmentShaderSource4);
+	GLuint shaderTrack = compileShader(vertexShaderSource, fragmentShaderTrack);
+	GLuint shaderCar = compileShader(vertexShaderSource, fragmentShaderCar);
 
-	GLuint VBO1, VAO1;
-	glGenVertexArrays(1, &VAO1);
-	glGenBuffers(1, &VBO1);
+	GLuint VBO_Track, VAO_Track, VBO_Car, VAO_Car;
+	glGenVertexArrays(1, &VAO_Track);
+	glGenBuffers(1, &VBO_Track);
 
-	glBindVertexArray(VAO1);
-	glBindBuffer(GL_ARRAY_BUFFER, VBO1);
+	glGenVertexArrays(1, &VAO_Car);
+	glGenBuffers(1, &VBO_Car);
+
+	// TRACK
+	glBindVertexArray(VAO_Track);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO_Track);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(groundVertices), groundVertices, GL_STATIC_DRAW);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)0);
 	glEnableVertexAttribArray(0);
 	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
 
-	// load and create a texture
+	// CAR
+	glBindVertexArray(VAO_Car);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO_Car);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(carVertices), carVertices, GL_STATIC_DRAW);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
+	glEnableVertexAttribArray(0);
+
+	// LOAD TRACK TEXTURE
 	// -------------------------
 	unsigned int texture1;
 	// texture 1
@@ -140,21 +203,32 @@ int main()
 		glBindTexture(GL_TEXTURE_2D, texture1);
 
 		model = glm::mat4(1.0f);
-		glUseProgram(shaderProgram4);
-		glUniformMatrix4fv(glGetUniformLocation(shaderProgram4, "model"), 1, GL_FALSE, glm::value_ptr(model));
-		glUniformMatrix4fv(glGetUniformLocation(shaderProgram4, "view"), 1, GL_FALSE, glm::value_ptr(view));
-		glUniformMatrix4fv(glGetUniformLocation(shaderProgram4, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
-		glBindVertexArray(VAO1);
+		glUseProgram(shaderTrack);
+		glUniformMatrix4fv(glGetUniformLocation(shaderTrack, "model"), 1, GL_FALSE, glm::value_ptr(model));
+		glUniformMatrix4fv(glGetUniformLocation(shaderTrack, "view"), 1, GL_FALSE, glm::value_ptr(view));
+		glUniformMatrix4fv(glGetUniformLocation(shaderTrack, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+		glBindVertexArray(VAO_Track);
 		glDrawArrays(GL_TRIANGLES, 0, 6);
+
+		model = glm::translate(model, glm::vec3(-3.0f, 0.0f, 0.0f));
+		glUseProgram(shaderCar);
+		glUniformMatrix4fv(glGetUniformLocation(shaderCar, "model"), 1, GL_FALSE, glm::value_ptr(model));
+		glUniformMatrix4fv(glGetUniformLocation(shaderCar, "view"), 1, GL_FALSE, glm::value_ptr(view));
+		glUniformMatrix4fv(glGetUniformLocation(shaderCar, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+		glBindVertexArray(VAO_Car);
+		glDrawArrays(GL_TRIANGLES, 0, 36);
 
 		// Trocar os buffers da janela
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
 
-	glDeleteVertexArrays(1, &VAO1);
-	glDeleteBuffers(1, &VBO1);
-	glDeleteProgram(shaderProgram4);
+	glDeleteVertexArrays(1, &VAO_Track);
+	glDeleteBuffers(1, &VBO_Track);
+	glDeleteVertexArrays(1, &VAO_Car);
+	glDeleteBuffers(1, &VBO_Car);
+	glDeleteProgram(shaderTrack);
+	glDeleteProgram(shaderCar);
 
 	glfwTerminate();
 	return 0;
