@@ -20,7 +20,8 @@ GLuint compileShader(const char *vertexSource, const char *fragmentSource);
 void checkShaderCompileStatus(GLuint shader);
 void checkProgramLinkStatus(GLuint program);
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
-void processInput(GLFWwindow *window, float *x, float *y, float *z);
+void processInput(GLFWwindow *window);
+void resetCamera();
 
 const char *vertexShaderSource = "#version 330 core\n"
 								 "layout(location = 0) in vec3 position;\n"
@@ -52,6 +53,15 @@ const char *fragmentShaderCar = "#version 330 core\n"
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
 
+glm::vec3 cameraPos   = glm::vec3(0.0f, 0.0f,  3.0f);
+glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
+glm::vec3 cameraUp    = glm::vec3(0.0f, 1.0f,  0.0f);
+
+float sensitivity = 1.0f;
+float yaw = -90.0f;
+float pitch = 0.0f;
+float zoom = 45.0f;
+
 float groundVertices[] = {
 	-5.0f, -0.6f, 5.0f, 0.0f, 0.0f,
 	5.0f, -0.6f, -5.0f, 1.0f, 1.0f,
@@ -62,54 +72,109 @@ float groundVertices[] = {
 
 // Ainda é um cubo
 // TODO: modelar carro
-float carVertices[] = {
-	-0.5f, -0.5f, -0.5f, // fundo
-	0.5f, -0.5f, -0.5f,
-	0.5f, 0.5f, -0.5f,
-	0.5f, 0.5f, -0.5f,
-	-0.5f, 0.5f, -0.5f,
-	-0.5f, -0.5f, -0.5f,
+// float carVertices[] = {
 
-	-0.5f, -0.5f, 0.5f, // frente
-	0.5f, -0.5f, 0.5f,
-	0.5f, 0.5f, 0.5f,
-	0.5f, 0.5f, 0.5f,
-	-0.5f, 0.5f, 0.5f,
-	-0.5f, -0.5f, 0.5f,
+// };
+	float carVertices[] = {
+		// Base of the car
+		-0.5f, -0.5f, -1.0f,  0.5f, -0.5f, -1.0f,  0.5f, -0.5f, 1.0f,
+		0.5f, -0.5f, 1.0f,  -0.5f, -0.5f, 1.0f,  -0.5f, -0.5f, -1.0f,
 
-	-0.5f, 0.5f, 0.5f, // lateral esquerda
-	-0.5f, 0.5f, -0.5f,
-	-0.5f, -0.5f, -0.5f,
-	-0.5f, -0.5f, -0.5f,
-	-0.5f, -0.5f, 0.5f,
-	-0.5f, 0.5f, 0.5f,
+		// Top of the car
+		-0.5f, 0.0f, -1.0f,  0.5f, 0.0f, -1.0f,  0.5f, 0.0f, 1.0f,
+		0.5f, 0.0f, 1.0f,  -0.5f, 0.0f, 1.0f,  -0.5f, 0.0f, -1.0f,
 
-	0.5f, 0.5f, 0.5f, // lateral direita
-	0.5f, 0.5f, -0.5f,
-	0.5f, -0.5f, -0.5f,
-	0.5f, -0.5f, -0.5f,
-	0.5f, -0.5f, 0.5f,
-	0.5f, 0.5f, 0.5f,
+		// Front face
+		-0.5f, -0.5f, 1.0f,  0.5f, -0.5f, 1.0f,  0.5f, 0.0f, 1.0f,
+		0.5f, 0.0f, 1.0f,  -0.5f, 0.0f, 1.0f,  -0.5f, -0.5f, 1.0f,
 
-	-0.5f, -0.5f, -0.5f, // fundo
-	0.5f, -0.5f, -0.5f,
-	0.5f, -0.5f, 0.5f,
-	0.5f, -0.5f, 0.5f,
-	-0.5f, -0.5f, 0.5f,
-	-0.5f, -0.5f, -0.5f,
+		// Back face
+		-0.5f, -0.5f, -1.0f,  0.5f, -0.5f, -1.0f,  0.5f, 0.0f, -1.0f,
+		0.5f, 0.0f, -1.0f,  -0.5f, 0.0f, -1.0f,  -0.5f, -0.5f, -1.0f,
 
-	-0.5f, 0.5f, -0.5f, // topo
-	0.5f, 0.5f, -0.5f,
-	0.5f, 0.5f, 0.5f,
-	0.5f, 0.5f, 0.5f,
-	-0.5f, 0.5f, 0.5f,
-	-0.5f, 0.5f, -0.5f};
+		// Left face
+		-0.5f, -0.5f, -1.0f,  -0.5f, -0.5f, 1.0f,  -0.5f, 0.0f, 1.0f,
+		-0.5f, 0.0f, 1.0f,  -0.5f, 0.0f, -1.0f,  -0.5f, -0.5f, -1.0f,
+
+		// Right face
+		0.5f, -0.5f, -1.0f,  0.5f, -0.5f, 1.0f,  0.5f, 0.0f, 1.0f,
+		0.5f, 0.0f, 1.0f,  0.5f, 0.0f, -1.0f,  0.5f, -0.5f, -1.0f,
+
+		// Roof of the car
+		-0.3f, 0.0f, -0.5f,  0.3f, 0.0f, -0.5f,  0.3f, 0.3f, -0.5f,
+		0.3f, 0.3f, -0.5f,  -0.3f, 0.3f, -0.5f,  -0.3f, 0.0f, -0.5f,
+
+		-0.3f, 0.0f, 0.5f,  0.3f, 0.0f, 0.5f,  0.3f, 0.3f, 0.5f,
+		0.3f, 0.3f, 0.5f,  -0.3f, 0.3f, 0.5f,  -0.3f, 0.0f, 0.5f,
+
+		// Front windshield
+		-0.3f, 0.3f, 0.5f,  0.3f, 0.3f, 0.5f,  0.3f, 0.3f, -0.5f,
+		0.3f, 0.3f, -0.5f,  -0.3f, 0.3f, -0.5f,  -0.3f, 0.3f, 0.5f,
+
+		// Hood
+		-0.5f, 0.0f, 0.5f,  0.5f, 0.0f, 0.5f,  0.3f, 0.3f, 0.5f,
+		0.3f, 0.3f, 0.5f,  -0.3f, 0.3f, 0.5f,  -0.5f, 0.0f, 0.5f,
+
+		// Trunk
+		-0.5f, 0.0f, -0.5f,  0.5f, 0.0f, -0.5f,  0.3f, 0.3f, -0.5f,
+		0.3f, 0.3f, -0.5f,  -0.3f, 0.3f, -0.5f,  -0.5f, 0.0f, -0.5f,
+
+		// Front left wheel
+		-0.6f, -0.5f, 0.7f,  -0.4f, -0.5f, 0.7f,  -0.4f, -0.3f, 0.7f,
+		-0.4f, -0.3f, 0.7f,  -0.6f, -0.3f, 0.7f,  -0.6f, -0.5f, 0.7f,
+
+		-0.6f, -0.5f, 0.9f,  -0.4f, -0.5f, 0.9f,  -0.4f, -0.3f, 0.9f,
+		-0.4f, -0.3f, 0.9f,  -0.6f, -0.3f, 0.9f,  -0.6f, -0.5f, 0.9f,
+
+		-0.6f, -0.5f, 0.7f,  -0.6f, -0.5f, 0.9f,  -0.6f, -0.3f, 0.9f,
+		-0.6f, -0.3f, 0.9f,  -0.6f, -0.3f, 0.7f,  -0.6f, -0.5f, 0.7f,
+
+		-0.4f, -0.5f, 0.7f,  -0.4f, -0.5f, 0.9f,  -0.4f, -0.3f, 0.9f,
+		-0.4f, -0.3f, 0.9f,  -0.4f, -0.3f, 0.7f,  -0.4f, -0.5f, 0.7f,
+
+		// Front right wheel
+		0.4f, -0.5f, 0.7f,  0.6f, -0.5f, 0.7f,  0.6f, -0.3f, 0.7f,
+		0.6f, -0.3f, 0.7f,  0.4f, -0.3f, 0.7f,  0.4f, -0.5f, 0.7f,
+
+		0.4f, -0.5f, 0.9f,  0.6f, -0.5f, 0.9f,  0.6f, -0.3f, 0.9f,
+		0.6f, -0.3f, 0.9f,  0.4f, -0.3f, 0.9f,  0.4f, -0.5f, 0.9f,
+
+		0.4f, -0.5f, 0.7f,  0.4f, -0.5f, 0.9f,  0.4f, -0.3f, 0.9f,
+		0.4f, -0.3f, 0.9f,  0.4f, -0.3f, 0.7f,  0.4f, -0.5f, 0.7f,
+
+		0.6f, -0.5f, 0.7f,  0.6f, -0.5f, 0.9f,  0.6f, -0.3f, 0.9f,
+		0.6f, -0.3f, 0.9f,  0.6f, -0.3f, 0.7f,  0.6f, -0.5f, 0.7f,
+
+		// Back left wheel
+		-0.6f, -0.5f, -0.9f,  -0.4f, -0.5f, -0.9f,  -0.4f, -0.3f, -0.9f,
+		-0.4f, -0.3f, -0.9f,  -0.6f, -0.3f, -0.9f,  -0.6f, -0.5f, -0.9f,
+
+		-0.6f, -0.5f, -0.7f,  -0.4f, -0.5f, -0.7f,  -0.4f, -0.3f, -0.7f,
+		-0.4f, -0.3f, -0.7f,  -0.6f, -0.3f, -0.7f,  -0.6f, -0.5f, -0.7f,
+
+		-0.6f, -0.5f, -0.9f,  -0.6f, -0.5f, -0.7f,  -0.6f, -0.3f, -0.7f,
+		-0.6f, -0.3f, -0.7f,  -0.6f, -0.3f, -0.9f,  -0.6f, -0.5f, -0.9f,
+
+		-0.4f, -0.5f, -0.9f,  -0.4f, -0.5f, -0.7f,  -0.4f, -0.3f, -0.7f,
+		-0.4f, -0.3f, -0.7f,  -0.4f, -0.3f, -0.9f,  -0.4f, -0.5f, -0.9f,
+
+		// Back right wheel
+		0.4f, -0.5f, -0.9f,  0.6f, -0.5f, -0.9f,  0.6f, -0.3f, -0.9f,
+		0.6f, -0.3f, -0.9f,  0.4f, -0.3f, -0.9f,  0.4f, -0.5f, -0.9f,
+
+		0.4f, -0.5f, -0.7f,  0.6f, -0.5f, -0.7f,  0.6f, -0.3f, -0.7f,
+		0.6f, -0.3f, -0.7f,  0.4f, -0.3f, -0.7f,  0.4f, -0.5f, -0.7f,
+
+		0.4f, -0.5f, -0.9f,  0.4f, -0.5f, -0.7f,  0.4f, -0.3f, -0.7f,
+		0.4f, -0.3f, -0.7f,  0.4f, -0.3f, -0.9f,  0.4f, -0.5f, -0.9f,
+
+		0.6f, -0.5f, -0.9f,  0.6f, -0.5f, -0.7f,  0.6f, -0.3f, -0.7f,
+		0.6f, -0.3f, -0.7f,  0.6f, -0.3f, -0.9f,  0.6f, -0.5f, -0.9f
+	};
 
 int main()
 {
-	float x = 0.0f;
-	float y = 0.0f;
-	float z = -5.0f;
+	resetCamera();
 
 	glfwInit();
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -208,7 +273,7 @@ int main()
 	while (!glfwWindowShouldClose(window))
 	{
 		// Atender os eventos
-		processInput(window, &x, &y, &z);
+		processInput(window);
 
 		// Limpar a tela
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -216,8 +281,9 @@ int main()
 		glm::mat4 model = glm::mat4(1.0f);
 		glm::mat4 view = glm::mat4(1.0f);
 		glm::mat4 projection = glm::mat4(1.0f);
-		view = glm::translate(view, glm::vec3(x, y, z));
-		projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
+		view  = glm::translate(view, glm::vec3(0.0f, 0.0f, -5.0f));
+		view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+		projection = glm::perspective(glm::radians(zoom), 800.0f / 600.0f, 0.1f, 100.0f);
 
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, texture1);
@@ -236,7 +302,7 @@ int main()
 		glUniformMatrix4fv(glGetUniformLocation(shaderCar, "view"), 1, GL_FALSE, glm::value_ptr(view));
 		glUniformMatrix4fv(glGetUniformLocation(shaderCar, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
 		glBindVertexArray(VAO_Car);
-		glDrawArrays(GL_TRIANGLES, 0, 36);
+		glDrawArrays(GL_TRIANGLES, 0, 36 * 1000);
 
 		// Trocar os buffers da janela
 		glfwSwapBuffers(window);
@@ -296,6 +362,30 @@ void checkShaderCompileStatus(GLuint shader)
 	}
 }
 
+void zoomControl(float z)
+{
+	zoom += z;
+	if (zoom < 1.0f) zoom = 1.0f;
+	if (zoom > 100.0f) zoom = 100.0f;
+}
+
+void viraCamera(float x, float y)
+{
+	yaw += x * sensitivity;
+	pitch += y * sensitivity;
+
+	if (pitch > 89.0f)
+		pitch = 89.0f;
+	if (pitch < -89.0f)
+		pitch = -89.0f;
+
+	glm::vec3 direction;
+	direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+	direction.y = sin(glm::radians(pitch));
+	direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+	cameraFront = glm::normalize(direction);
+}
+
 void checkProgramLinkStatus(GLuint program)
 {
 	int success;
@@ -307,53 +397,59 @@ void checkProgramLinkStatus(GLuint program)
 		fprintf(stderr, "Erro ao linkar programa: %s\n", infoLog);
 	}
 }
-
-void processInput(GLFWwindow *window, float *x, float *y, float *z)
+void resetCamera()
 {
-	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-		glfwSetWindowShouldClose(window, true);
+	// printf("CameraPos: %f, %f, %f\n", cameraPos.x, cameraPos.y, cameraPos.z);
+	// printf("CameraFront: %f, %f, %f\n", cameraFront.x, cameraFront.y, cameraFront.z);
+	// printf("CameraUp: %f, %f, %f\n", cameraUp.x, cameraUp.y, cameraUp.z);
+	// printf("Yaw: %f\n", yaw);
+	// printf("Pitch: %f\n", pitch);
+	// printf("Zoom: %f\n", zoom);
 
-	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-	{
-		*x += 0.1f;
-		printf("(%.3f,%.3f,%.3f\n", *x, *y, *z);
-	}
+    cameraPos   = glm::vec3(-0.1f, 3.0f,  10.0f);
+    cameraFront = glm::vec3(0.0f, -0.3f, -1.0f);
+    cameraUp    = glm::vec3(0.0f, 1.0f,  0.0f);
 
-	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-	{
-		*x -= 0.1f;
-		printf("(%.3f,%.3f,%.3f\n", *x, *y, *z);
-	}
+    sensitivity = 1.0f;
+    yaw = -90.0f;
+    pitch = 0.0f;
+    zoom = 45.0f;
+}
 
-	if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
-	{
-		*y += 0.1f;
-		printf("(%.3f,%.3f,%.3f\n", *x, *y, *z);
-	}
+void processInput(GLFWwindow *window)
+{
+    const float cameraSpeed = 0.05f; // adjust accordingly
 
-	if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
-	{
-		*y -= 0.1f;
-		printf("(%.3f,%.3f,%.3f\n", *x, *y, *z);
-	}
+    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+        glfwSetWindowShouldClose(window, true);
 
-	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-	{
-		*z += 0.1f;
-		printf("(%.3f,%.3f,%.3f\n", *x, *y, *z);
-	}
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+        cameraPos += cameraSpeed * cameraFront;
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+        cameraPos -= cameraSpeed * cameraFront;
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+        cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+        cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+    if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
+        cameraPos += glm::vec3(0.0f, 1.0f, 0.0f) * cameraSpeed;
+    if (glfwGetKey(window, GLFW_KEY_Z) == GLFW_PRESS)
+        cameraPos += glm::vec3(0.0f, -1.0f, 0.0f) * cameraSpeed;
 
-	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-	{
-		*z -= 0.1f;
-		printf("(%.3f,%.3f,%.3f\n", *x, *y, *z);
-	}
+    if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
+        viraCamera(0.0f,1.0f);
+    if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
+        viraCamera(0.0f,-1.0f);
+    if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
+        viraCamera(-1.0f,0.0f);
+    if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
+        viraCamera(1.0f,0.0f);
+
+    if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
+        zoomControl(1.0f);
+    if (glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS)
+        zoomControl(-1.0f);
 
 	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
-	{
-		*x = 0.0f;
-		*y = 0.0f;
-		*z = -5.0f;
-		printf("RESET\n(%.3f,%.3f,%.3f\n", *x, *y, *z);
-	}
+        resetCamera();
 }
