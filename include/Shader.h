@@ -1,7 +1,15 @@
 #ifndef SHADER_H
 #define SHADER_H
 
+
+#ifdef __APPLE__
 #include <glad/glad.h>
+#endif
+
+#ifdef __linux__
+#include <GL/glew.h>
+#endif
+
 #include <glm/glm.hpp>
 
 #include <string>

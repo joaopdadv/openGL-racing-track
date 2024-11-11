@@ -1,4 +1,11 @@
+#ifdef __APPLE__
 #include <glad/glad.h>
+#endif
+
+#ifdef __linux__
+#include <GL/glew.h>
+#endif
+
 #include <GLFW/glfw3.h>
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
@@ -123,11 +130,24 @@ int main()
 	glfwMakeContextCurrent(window);
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
+	#ifdef __APPLE__
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
 	{
 		std::cout << "Failed to initialize GLAD" << std::endl;
 		return -1;
 	}
+	#endif
+
+	#ifdef __linux__ 
+	if (glewInit() != GLEW_OK) {
+		std::cout << "Ocorreu um erro inciando o GLEW!" << std::endl;
+		return 1;
+	} else {
+		std::cout << "GLEW inicializado com sucesso!" << std::endl;
+		std::cout << glGetString(GL_VERSION) << std::endl;
+	}
+	#endif
+
 
 	GLuint shaderTrack = compileShader(vertexShaderSource, fragmentShaderTrack);
 	GLuint shaderCar = compileShader(vertexShaderSource, fragmentShaderCar);
