@@ -15,6 +15,7 @@
 #include <Shader.h>
 #include <iostream>
 #include <stdio.h>
+#include <vector>
 
 GLuint compileShader(const char *vertexSource, const char *fragmentSource);
 void checkShaderCompileStatus(GLuint shader);
@@ -70,36 +71,74 @@ float groundVertices[] = {
 	-5.0f, -0.6f, -5.0f, 0.0f, 1.0f,
 	5.0f, -0.6f, -5.0f, 1.0f, 1.0f};
 
-// Ainda é um cubo
-// TODO: modelar carro
-// float carVertices[] = {
+std::vector<float> createQuadVertices(float width, float height, float depth, glm::vec3 center) {
+	float halfWidth = width / 2.0f;
+	float halfHeight = height / 2.0f;
+	float halfDepth = depth / 2.0f;
 
-// };
-	float carVertices[] = {
-		// Base of the car
-		-0.5f, -0.5f, -1.0f,  0.5f, -0.5f, -1.0f,  0.5f, -0.5f, 1.0f,
-		0.5f, -0.5f, 1.0f,  -0.5f, -0.5f, 1.0f,  -0.5f, -0.5f, -1.0f,
-
-		// Top of the car
-		-0.5f, 0.0f, -1.0f,  0.5f, 0.0f, -1.0f,  0.5f, 0.0f, 1.0f,
-		0.5f, 0.0f, 1.0f,  -0.5f, 0.0f, 1.0f,  -0.5f, 0.0f, -1.0f,
-
+	std::vector<float> vertices = {
 		// Front face
-		-0.5f, -0.5f, 1.0f,  0.5f, -0.5f, 1.0f,  0.5f, 0.0f, 1.0f,
-		0.5f, 0.0f, 1.0f,  -0.5f, 0.0f, 1.0f,  -0.5f, -0.5f, 1.0f,
+		center.x - halfWidth, center.y - halfHeight, center.z + halfDepth,
+		center.x + halfWidth, center.y - halfHeight, center.z + halfDepth,
+		center.x + halfWidth, center.y + halfHeight, center.z + halfDepth,
+		center.x + halfWidth, center.y + halfHeight, center.z + halfDepth,
+		center.x - halfWidth, center.y + halfHeight, center.z + halfDepth,
+		center.x - halfWidth, center.y - halfHeight, center.z + halfDepth,
 
 		// Back face
-		-0.5f, -0.5f, -1.0f,  0.5f, -0.5f, -1.0f,  0.5f, 0.0f, -1.0f,
-		0.5f, 0.0f, -1.0f,  -0.5f, 0.0f, -1.0f,  -0.5f, -0.5f, -1.0f,
+		center.x - halfWidth, center.y - halfHeight, center.z - halfDepth,
+		center.x + halfWidth, center.y - halfHeight, center.z - halfDepth,
+		center.x + halfWidth, center.y + halfHeight, center.z - halfDepth,
+		center.x + halfWidth, center.y + halfHeight, center.z - halfDepth,
+		center.x - halfWidth, center.y + halfHeight, center.z - halfDepth,
+		center.x - halfWidth, center.y - halfHeight, center.z - halfDepth,
 
 		// Left face
-		-0.5f, -0.5f, -1.0f,  -0.5f, -0.5f, 1.0f,  -0.5f, 0.0f, 1.0f,
-		-0.5f, 0.0f, 1.0f,  -0.5f, 0.0f, -1.0f,  -0.5f, -0.5f, -1.0f,
+		center.x - halfWidth, center.y + halfHeight, center.z + halfDepth,
+		center.x - halfWidth, center.y + halfHeight, center.z - halfDepth,
+		center.x - halfWidth, center.y - halfHeight, center.z - halfDepth,
+		center.x - halfWidth, center.y - halfHeight, center.z - halfDepth,
+		center.x - halfWidth, center.y - halfHeight, center.z + halfDepth,
+		center.x - halfWidth, center.y + halfHeight, center.z + halfDepth,
 
 		// Right face
-		0.5f, -0.5f, -1.0f,  0.5f, -0.5f, 1.0f,  0.5f, 0.0f, 1.0f,
-		0.5f, 0.0f, 1.0f,  0.5f, 0.0f, -1.0f,  0.5f, -0.5f, -1.0f,
+		center.x + halfWidth, center.y + halfHeight, center.z + halfDepth,
+		center.x + halfWidth, center.y + halfHeight, center.z - halfDepth,
+		center.x + halfWidth, center.y - halfHeight, center.z - halfDepth,
+		center.x + halfWidth, center.y - halfHeight, center.z - halfDepth,
+		center.x + halfWidth, center.y - halfHeight, center.z + halfDepth,
+		center.x + halfWidth, center.y + halfHeight, center.z + halfDepth,
 
+		// Top face
+		center.x - halfWidth, center.y + halfHeight, center.z - halfDepth,
+		center.x + halfWidth, center.y + halfHeight, center.z - halfDepth,
+		center.x + halfWidth, center.y + halfHeight, center.z + halfDepth,
+		center.x + halfWidth, center.y + halfHeight, center.z + halfDepth,
+		center.x - halfWidth, center.y + halfHeight, center.z + halfDepth,
+		center.x - halfWidth, center.y + halfHeight, center.z - halfDepth,
+
+		// Bottom face
+		center.x - halfWidth, center.y - halfHeight, center.z - halfDepth,
+		center.x + halfWidth, center.y - halfHeight, center.z - halfDepth,
+		center.x + halfWidth, center.y - halfHeight, center.z + halfDepth,
+		center.x + halfWidth, center.y - halfHeight, center.z + halfDepth,
+		center.x - halfWidth, center.y - halfHeight, center.z + halfDepth,
+		center.x - halfWidth, center.y - halfHeight, center.z - halfDepth
+	};
+
+	return vertices;
+}
+
+void mergeVec(std::vector<float>& dest, std::vector<float> v1, std::vector<float> v2)
+{
+	dest.insert(dest.end(), v1.begin(), v1.end());
+	dest.insert(dest.end(), v2.begin(), v2.end());
+}
+
+std::vector<float> createCarVertices()
+{
+	std::vector<float> bottom = createQuadVertices(1.0f, 0.5f, 2.0f, glm::vec3(0.0f, -0.25f, 0.0f));
+	std::vector<float> top = {
 		// Roof of the car
 		-0.3f, 0.0f, -0.5f,  0.3f, 0.0f, -0.5f,  0.3f, 0.3f, -0.5f,
 		0.3f, 0.3f, -0.5f,  -0.3f, 0.3f, -0.5f,  -0.3f, 0.0f, -0.5f,
@@ -119,61 +158,33 @@ float groundVertices[] = {
 		-0.5f, 0.0f, -0.5f,  0.5f, 0.0f, -0.5f,  0.3f, 0.3f, -0.5f,
 		0.3f, 0.3f, -0.5f,  -0.3f, 0.3f, -0.5f,  -0.5f, 0.0f, -0.5f,
 
-		// Front left wheel
-		-0.6f, -0.5f, 0.7f,  -0.4f, -0.5f, 0.7f,  -0.4f, -0.3f, 0.7f,
-		-0.4f, -0.3f, 0.7f,  -0.6f, -0.3f, 0.7f,  -0.6f, -0.5f, 0.7f,
+		// Left window
+		-0.3f, 0.0f, 0.5f,  -0.3f, 0.3f, 0.5f,  -0.3f, 0.3f, -0.5f,
+		-0.3f, 0.3f, -0.5f,  -0.3f, 0.0f, -0.5f,  -0.3f, 0.0f, 0.5f,
 
-		-0.6f, -0.5f, 0.9f,  -0.4f, -0.5f, 0.9f,  -0.4f, -0.3f, 0.9f,
-		-0.4f, -0.3f, 0.9f,  -0.6f, -0.3f, 0.9f,  -0.6f, -0.5f, 0.9f,
-
-		-0.6f, -0.5f, 0.7f,  -0.6f, -0.5f, 0.9f,  -0.6f, -0.3f, 0.9f,
-		-0.6f, -0.3f, 0.9f,  -0.6f, -0.3f, 0.7f,  -0.6f, -0.5f, 0.7f,
-
-		-0.4f, -0.5f, 0.7f,  -0.4f, -0.5f, 0.9f,  -0.4f, -0.3f, 0.9f,
-		-0.4f, -0.3f, 0.9f,  -0.4f, -0.3f, 0.7f,  -0.4f, -0.5f, 0.7f,
-
-		// Front right wheel
-		0.4f, -0.5f, 0.7f,  0.6f, -0.5f, 0.7f,  0.6f, -0.3f, 0.7f,
-		0.6f, -0.3f, 0.7f,  0.4f, -0.3f, 0.7f,  0.4f, -0.5f, 0.7f,
-
-		0.4f, -0.5f, 0.9f,  0.6f, -0.5f, 0.9f,  0.6f, -0.3f, 0.9f,
-		0.6f, -0.3f, 0.9f,  0.4f, -0.3f, 0.9f,  0.4f, -0.5f, 0.9f,
-
-		0.4f, -0.5f, 0.7f,  0.4f, -0.5f, 0.9f,  0.4f, -0.3f, 0.9f,
-		0.4f, -0.3f, 0.9f,  0.4f, -0.3f, 0.7f,  0.4f, -0.5f, 0.7f,
-
-		0.6f, -0.5f, 0.7f,  0.6f, -0.5f, 0.9f,  0.6f, -0.3f, 0.9f,
-		0.6f, -0.3f, 0.9f,  0.6f, -0.3f, 0.7f,  0.6f, -0.5f, 0.7f,
-
-		// Back left wheel
-		-0.6f, -0.5f, -0.9f,  -0.4f, -0.5f, -0.9f,  -0.4f, -0.3f, -0.9f,
-		-0.4f, -0.3f, -0.9f,  -0.6f, -0.3f, -0.9f,  -0.6f, -0.5f, -0.9f,
-
-		-0.6f, -0.5f, -0.7f,  -0.4f, -0.5f, -0.7f,  -0.4f, -0.3f, -0.7f,
-		-0.4f, -0.3f, -0.7f,  -0.6f, -0.3f, -0.7f,  -0.6f, -0.5f, -0.7f,
-
-		-0.6f, -0.5f, -0.9f,  -0.6f, -0.5f, -0.7f,  -0.6f, -0.3f, -0.7f,
-		-0.6f, -0.3f, -0.7f,  -0.6f, -0.3f, -0.9f,  -0.6f, -0.5f, -0.9f,
-
-		-0.4f, -0.5f, -0.9f,  -0.4f, -0.5f, -0.7f,  -0.4f, -0.3f, -0.7f,
-		-0.4f, -0.3f, -0.7f,  -0.4f, -0.3f, -0.9f,  -0.4f, -0.5f, -0.9f,
-
-		// Back right wheel
-		0.4f, -0.5f, -0.9f,  0.6f, -0.5f, -0.9f,  0.6f, -0.3f, -0.9f,
-		0.6f, -0.3f, -0.9f,  0.4f, -0.3f, -0.9f,  0.4f, -0.5f, -0.9f,
-
-		0.4f, -0.5f, -0.7f,  0.6f, -0.5f, -0.7f,  0.6f, -0.3f, -0.7f,
-		0.6f, -0.3f, -0.7f,  0.4f, -0.3f, -0.7f,  0.4f, -0.5f, -0.7f,
-
-		0.4f, -0.5f, -0.9f,  0.4f, -0.5f, -0.7f,  0.4f, -0.3f, -0.7f,
-		0.4f, -0.3f, -0.7f,  0.4f, -0.3f, -0.9f,  0.4f, -0.5f, -0.9f,
-
-		0.6f, -0.5f, -0.9f,  0.6f, -0.5f, -0.7f,  0.6f, -0.3f, -0.7f,
-		0.6f, -0.3f, -0.7f,  0.6f, -0.3f, -0.9f,  0.6f, -0.5f, -0.9f
+		// Right window
+		0.3f, 0.0f, 0.5f,  0.3f, 0.3f, 0.5f,  0.3f, 0.3f, -0.5f,
+		0.3f, 0.3f, -0.5f,  0.3f, 0.0f, -0.5f,  0.3f, 0.0f, 0.5f,
 	};
+
+	std::vector<float> frontLeftWheel = createQuadVertices(0.2f, 0.2f, 0.2f, glm::vec3(-0.5f, -0.4f, 0.8f));
+	std::vector<float> frontRightWheel = createQuadVertices(0.2f, 0.2f, 0.2f, glm::vec3(0.5f, -0.4f, 0.8f));
+	std::vector<float> backLeftWheel = createQuadVertices(0.2f, 0.2f, 0.2f, glm::vec3(-0.5f, -0.4f, -0.8f));
+	std::vector<float> backRightWheel = createQuadVertices(0.2f, 0.2f, 0.2f, glm::vec3(0.5f, -0.4f, -0.8f));
+
+	std::vector<float> vertices;
+	vertices.reserve(bottom.size() + top.size() + frontLeftWheel.size() + frontRightWheel.size() + backLeftWheel.size() + backRightWheel.size());
+
+	mergeVec(vertices, bottom, top);
+	mergeVec(vertices, frontRightWheel, backLeftWheel);
+	mergeVec(vertices, backRightWheel, backRightWheel);
+
+	return vertices;
+}
 
 int main()
 {
+	std::vector<float> carVertices = createCarVertices();
 	resetCamera();
 
 	glfwInit();
@@ -236,7 +247,7 @@ int main()
 	// CAR
 	glBindVertexArray(VAO_Car);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO_Car);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(carVertices), carVertices, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, carVertices.size() * sizeof(float), carVertices.data(), GL_STATIC_DRAW);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
 	glEnableVertexAttribArray(0);
 
