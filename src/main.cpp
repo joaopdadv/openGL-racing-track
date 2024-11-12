@@ -25,16 +25,16 @@ void processInput(GLFWwindow *window);
 void resetCamera();
 
 const char *vertexShaderTrack = "#version 330 core\n"
-								 "layout(location = 0) in vec3 position;"
-								 "layout (location = 1) in vec2 aTexCoord;"
-								 "out vec2 TexCoord;"
-								 "uniform mat4 model;"
-								 "uniform mat4 view;"
-								 "uniform mat4 projection;"
-								 "void main() {"
-								 "   gl_Position = projection * view * model * vec4(position, 1.0f);"
-								 "   TexCoord = vec2(aTexCoord.x, aTexCoord.y);"
-								 "}";
+								"layout(location = 0) in vec3 position;"
+								"layout (location = 1) in vec2 aTexCoord;"
+								"out vec2 TexCoord;"
+								"uniform mat4 model;"
+								"uniform mat4 view;"
+								"uniform mat4 projection;"
+								"void main() {"
+								"   gl_Position = projection * view * model * vec4(position, 1.0f);"
+								"   TexCoord = vec2(aTexCoord.x, aTexCoord.y);"
+								"}";
 
 const char *fragmentShaderTrack = "#version 330 core\n"
 								  "out vec4 color;"
@@ -45,16 +45,16 @@ const char *fragmentShaderTrack = "#version 330 core\n"
 								  "}";
 
 const char *vertexShaderCar2 = "#version 330 core\n"
-								 "layout(location = 0) in vec3 position;"
-								 "layout (location = 1) in vec2 aTexCoord;"
-								 "out vec2 TexCoord;"
-								 "uniform mat4 model;"
-								 "uniform mat4 view;"
-								 "uniform mat4 projection;"
-								 "void main() {"
-								 "   gl_Position = projection * view * model * vec4(position, 1.0f);"
-								 "   TexCoord = vec2(aTexCoord.x, aTexCoord.y);"
-								 "}";
+							   "layout(location = 0) in vec3 position;"
+							   "layout (location = 1) in vec2 aTexCoord;"
+							   "out vec2 TexCoord;"
+							   "uniform mat4 model;"
+							   "uniform mat4 view;"
+							   "uniform mat4 projection;"
+							   "void main() {"
+							   "   gl_Position = projection * view * model * vec4(position, 1.0f);"
+							   "   TexCoord = vec2(aTexCoord.x, aTexCoord.y);"
+							   "}";
 
 const char *vertexShaderCar = "#version 330 core\n"
 							  "layout(location = 0) in vec3 position;"
@@ -79,13 +79,13 @@ const char *fragmentShaderCar = "#version 330 core\n"
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
 
-glm::vec3 cameraPos   = glm::vec3(0.0f, 0.0f,  3.0f);
+glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
 glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
-glm::vec3 cameraUp    = glm::vec3(0.0f, 1.0f,  0.0f);
+glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
 
 // cores
 glm::vec3 black = glm::vec3(0.0f, 0.0f, 0.0f);
-glm::vec3 pink = glm::vec3(0.867f,0.667f,0.933f);
+glm::vec3 pink = glm::vec3(0.867f, 0.667f, 0.933f);
 
 float sensitivity = 1.0f;
 float yaw = -90.0f;
@@ -100,65 +100,246 @@ float groundVertices[] = {
 	-5.0f, -0.6f, -5.0f, 0.0f, 1.0f,
 	5.0f, -0.6f, -5.0f, 1.0f, 1.0f};
 
-std::vector<float> createQuadVertices(float width, float height, float depth, glm::vec3 center, glm::vec3 color) {
+std::vector<float> createQuadVertices(float width, float height, float depth, glm::vec3 center, glm::vec3 color)
+{
 	float halfWidth = width / 2.0f;
 	float halfHeight = height / 2.0f;
 	float halfDepth = depth / 2.0f;
 
 	std::vector<float> vertices = {
 		// Front face
-		center.x - halfWidth, center.y - halfHeight, center.z + halfDepth, color.x, color.y, color.z,
-		center.x + halfWidth, center.y - halfHeight, center.z + halfDepth, color.x, color.y, color.z,
-		center.x + halfWidth, center.y + halfHeight, center.z + halfDepth, color.x, color.y, color.z,
-		center.x + halfWidth, center.y + halfHeight, center.z + halfDepth, color.x, color.y, color.z,
-		center.x - halfWidth, center.y + halfHeight, center.z + halfDepth, color.x, color.y, color.z,
-		center.x - halfWidth, center.y - halfHeight, center.z + halfDepth, color.x, color.y, color.z,
+		center.x - halfWidth,
+		center.y - halfHeight,
+		center.z + halfDepth,
+		color.x,
+		color.y,
+		color.z,
+		center.x + halfWidth,
+		center.y - halfHeight,
+		center.z + halfDepth,
+		color.x,
+		color.y,
+		color.z,
+		center.x + halfWidth,
+		center.y + halfHeight,
+		center.z + halfDepth,
+		color.x,
+		color.y,
+		color.z,
+		center.x + halfWidth,
+		center.y + halfHeight,
+		center.z + halfDepth,
+		color.x,
+		color.y,
+		color.z,
+		center.x - halfWidth,
+		center.y + halfHeight,
+		center.z + halfDepth,
+		color.x,
+		color.y,
+		color.z,
+		center.x - halfWidth,
+		center.y - halfHeight,
+		center.z + halfDepth,
+		color.x,
+		color.y,
+		color.z,
 
 		// Back face
-		center.x - halfWidth, center.y - halfHeight, center.z - halfDepth, color.x, color.y, color.z,
-		center.x + halfWidth, center.y - halfHeight, center.z - halfDepth, color.x, color.y, color.z,
-		center.x + halfWidth, center.y + halfHeight, center.z - halfDepth, color.x, color.y, color.z,
-		center.x + halfWidth, center.y + halfHeight, center.z - halfDepth, color.x, color.y, color.z,
-		center.x - halfWidth, center.y + halfHeight, center.z - halfDepth, color.x, color.y, color.z,
-		center.x - halfWidth, center.y - halfHeight, center.z - halfDepth, color.x, color.y, color.z,
+		center.x - halfWidth,
+		center.y - halfHeight,
+		center.z - halfDepth,
+		color.x,
+		color.y,
+		color.z,
+		center.x + halfWidth,
+		center.y - halfHeight,
+		center.z - halfDepth,
+		color.x,
+		color.y,
+		color.z,
+		center.x + halfWidth,
+		center.y + halfHeight,
+		center.z - halfDepth,
+		color.x,
+		color.y,
+		color.z,
+		center.x + halfWidth,
+		center.y + halfHeight,
+		center.z - halfDepth,
+		color.x,
+		color.y,
+		color.z,
+		center.x - halfWidth,
+		center.y + halfHeight,
+		center.z - halfDepth,
+		color.x,
+		color.y,
+		color.z,
+		center.x - halfWidth,
+		center.y - halfHeight,
+		center.z - halfDepth,
+		color.x,
+		color.y,
+		color.z,
 
 		// Left face
-		center.x - halfWidth, center.y + halfHeight, center.z + halfDepth, color.x, color.y, color.z,
-		center.x - halfWidth, center.y + halfHeight, center.z - halfDepth, color.x, color.y, color.z,
-		center.x - halfWidth, center.y - halfHeight, center.z - halfDepth, color.x, color.y, color.z,
-		center.x - halfWidth, center.y - halfHeight, center.z - halfDepth, color.x, color.y, color.z,
-		center.x - halfWidth, center.y - halfHeight, center.z + halfDepth, color.x, color.y, color.z,
-		center.x - halfWidth, center.y + halfHeight, center.z + halfDepth, color.x, color.y, color.z,
+		center.x - halfWidth,
+		center.y + halfHeight,
+		center.z + halfDepth,
+		color.x,
+		color.y,
+		color.z,
+		center.x - halfWidth,
+		center.y + halfHeight,
+		center.z - halfDepth,
+		color.x,
+		color.y,
+		color.z,
+		center.x - halfWidth,
+		center.y - halfHeight,
+		center.z - halfDepth,
+		color.x,
+		color.y,
+		color.z,
+		center.x - halfWidth,
+		center.y - halfHeight,
+		center.z - halfDepth,
+		color.x,
+		color.y,
+		color.z,
+		center.x - halfWidth,
+		center.y - halfHeight,
+		center.z + halfDepth,
+		color.x,
+		color.y,
+		color.z,
+		center.x - halfWidth,
+		center.y + halfHeight,
+		center.z + halfDepth,
+		color.x,
+		color.y,
+		color.z,
 
 		// Right face
-		center.x + halfWidth, center.y + halfHeight, center.z + halfDepth, color.x, color.y, color.z,
-		center.x + halfWidth, center.y + halfHeight, center.z - halfDepth, color.x, color.y, color.z,
-		center.x + halfWidth, center.y - halfHeight, center.z - halfDepth, color.x, color.y, color.z,
-		center.x + halfWidth, center.y - halfHeight, center.z - halfDepth, color.x, color.y, color.z,
-		center.x + halfWidth, center.y - halfHeight, center.z + halfDepth, color.x, color.y, color.z,
-		center.x + halfWidth, center.y + halfHeight, center.z + halfDepth, color.x, color.y, color.z,
+		center.x + halfWidth,
+		center.y + halfHeight,
+		center.z + halfDepth,
+		color.x,
+		color.y,
+		color.z,
+		center.x + halfWidth,
+		center.y + halfHeight,
+		center.z - halfDepth,
+		color.x,
+		color.y,
+		color.z,
+		center.x + halfWidth,
+		center.y - halfHeight,
+		center.z - halfDepth,
+		color.x,
+		color.y,
+		color.z,
+		center.x + halfWidth,
+		center.y - halfHeight,
+		center.z - halfDepth,
+		color.x,
+		color.y,
+		color.z,
+		center.x + halfWidth,
+		center.y - halfHeight,
+		center.z + halfDepth,
+		color.x,
+		color.y,
+		color.z,
+		center.x + halfWidth,
+		center.y + halfHeight,
+		center.z + halfDepth,
+		color.x,
+		color.y,
+		color.z,
 
 		// Top face
-		center.x - halfWidth, center.y + halfHeight, center.z - halfDepth, color.x, color.y, color.z,
-		center.x + halfWidth, center.y + halfHeight, center.z - halfDepth, color.x, color.y, color.z,
-		center.x + halfWidth, center.y + halfHeight, center.z + halfDepth, color.x, color.y, color.z,
-		center.x + halfWidth, center.y + halfHeight, center.z + halfDepth, color.x, color.y, color.z,
-		center.x - halfWidth, center.y + halfHeight, center.z + halfDepth, color.x, color.y, color.z,
-		center.x - halfWidth, center.y + halfHeight, center.z - halfDepth, color.x, color.y, color.z,
+		center.x - halfWidth,
+		center.y + halfHeight,
+		center.z - halfDepth,
+		color.x,
+		color.y,
+		color.z,
+		center.x + halfWidth,
+		center.y + halfHeight,
+		center.z - halfDepth,
+		color.x,
+		color.y,
+		color.z,
+		center.x + halfWidth,
+		center.y + halfHeight,
+		center.z + halfDepth,
+		color.x,
+		color.y,
+		color.z,
+		center.x + halfWidth,
+		center.y + halfHeight,
+		center.z + halfDepth,
+		color.x,
+		color.y,
+		color.z,
+		center.x - halfWidth,
+		center.y + halfHeight,
+		center.z + halfDepth,
+		color.x,
+		color.y,
+		color.z,
+		center.x - halfWidth,
+		center.y + halfHeight,
+		center.z - halfDepth,
+		color.x,
+		color.y,
+		color.z,
 
 		// Bottom face
-		center.x - halfWidth, center.y - halfHeight, center.z - halfDepth, color.x, color.y, color.z,
-		center.x + halfWidth, center.y - halfHeight, center.z - halfDepth, color.x, color.y, color.z,
-		center.x + halfWidth, center.y - halfHeight, center.z + halfDepth, color.x, color.y, color.z,
-		center.x + halfWidth, center.y - halfHeight, center.z + halfDepth, color.x, color.y, color.z,
-		center.x - halfWidth, center.y - halfHeight, center.z + halfDepth, color.x, color.y, color.z,
-		center.x - halfWidth, center.y - halfHeight, center.z - halfDepth, color.x, color.y, color.z,
+		center.x - halfWidth,
+		center.y - halfHeight,
+		center.z - halfDepth,
+		color.x,
+		color.y,
+		color.z,
+		center.x + halfWidth,
+		center.y - halfHeight,
+		center.z - halfDepth,
+		color.x,
+		color.y,
+		color.z,
+		center.x + halfWidth,
+		center.y - halfHeight,
+		center.z + halfDepth,
+		color.x,
+		color.y,
+		color.z,
+		center.x + halfWidth,
+		center.y - halfHeight,
+		center.z + halfDepth,
+		color.x,
+		color.y,
+		color.z,
+		center.x - halfWidth,
+		center.y - halfHeight,
+		center.z + halfDepth,
+		color.x,
+		color.y,
+		color.z,
+		center.x - halfWidth,
+		center.y - halfHeight,
+		center.z - halfDepth,
+		color.x,
+		color.y,
+		color.z,
 	};
 
 	return vertices;
 }
 
-void mergeVec(std::vector<float>& dest, std::vector<float> v1, std::vector<float> v2)
+void mergeVec(std::vector<float> &dest, std::vector<float> v1, std::vector<float> v2)
 {
 	dest.insert(dest.end(), v1.begin(), v1.end());
 	dest.insert(dest.end(), v2.begin(), v2.end());
@@ -166,65 +347,275 @@ void mergeVec(std::vector<float>& dest, std::vector<float> v1, std::vector<float
 
 std::vector<float> createCarVertices()
 {
-	std::vector<float> bottom = createQuadVertices(1.0f, 0.5f, 2.0f, 
-		glm::vec3(0.0f, -0.25f, 0.0f),
-		black);
+	std::vector<float> bottom = createQuadVertices(1.0f, 0.5f, 2.0f,
+												   glm::vec3(0.0f, -0.25f, 0.0f),
+												   black);
 
 	std::vector<float> top = {
 		// Roof of the car
-		-0.3f, 0.0f, -0.5f, 0.0f, 0.0f, 0.0f,
-		0.3f, 0.0f, -0.5f,  0.0f, 0.0f, 0.0f,
-		0.3f, 0.3f, -0.5f,0.0f, 0.0f, 0.0f,
-		0.3f, 0.3f, -0.5f,  0.0f, 0.0f, 0.0f,
-		-0.3f, 0.3f, -0.5f,  0.0f, 0.0f, 0.0f,
-		-0.3f, 0.0f, -0.5f,0.0f, 0.0f, 0.0f,
+		-0.3f,
+		0.0f,
+		-0.5f,
+		0.0f,
+		0.0f,
+		0.0f,
+		0.3f,
+		0.0f,
+		-0.5f,
+		0.0f,
+		0.0f,
+		0.0f,
+		0.3f,
+		0.3f,
+		-0.5f,
+		0.0f,
+		0.0f,
+		0.0f,
+		0.3f,
+		0.3f,
+		-0.5f,
+		0.0f,
+		0.0f,
+		0.0f,
+		-0.3f,
+		0.3f,
+		-0.5f,
+		0.0f,
+		0.0f,
+		0.0f,
+		-0.3f,
+		0.0f,
+		-0.5f,
+		0.0f,
+		0.0f,
+		0.0f,
 
-		-0.3f, 0.0f, 0.5f,  0.0f, 0.0f, 0.0f,
-		0.3f, 0.0f, 0.5f, 0.0f, 0.0f, 0.0f, 
-		0.3f, 0.3f, 0.5f,0.0f, 0.0f, 0.0f,
-		0.3f, 0.3f, 0.5f, 0.0f, 0.0f, 0.0f, 
-		-0.3f, 0.3f, 0.5f, 0.0f, 0.0f, 0.0f, 
-		-0.3f, 0.0f, 0.5f,0.0f, 0.0f, 0.0f,
+		-0.3f,
+		0.0f,
+		0.5f,
+		0.0f,
+		0.0f,
+		0.0f,
+		0.3f,
+		0.0f,
+		0.5f,
+		0.0f,
+		0.0f,
+		0.0f,
+		0.3f,
+		0.3f,
+		0.5f,
+		0.0f,
+		0.0f,
+		0.0f,
+		0.3f,
+		0.3f,
+		0.5f,
+		0.0f,
+		0.0f,
+		0.0f,
+		-0.3f,
+		0.3f,
+		0.5f,
+		0.0f,
+		0.0f,
+		0.0f,
+		-0.3f,
+		0.0f,
+		0.5f,
+		0.0f,
+		0.0f,
+		0.0f,
 
 		// Front windshield
-		-0.3f, 0.3f, 0.5f,  0.0f, 0.0f, 0.0f,
-		0.3f, 0.3f, 0.5f,  0.0f, 0.0f, 0.0f,
-		0.3f, 0.3f, -0.5f,0.0f, 0.0f, 0.0f,
-		0.3f, 0.3f, -0.5f,  0.0f, 0.0f, 0.0f,
-		-0.3f, 0.3f, -0.5f,  0.0f, 0.0f, 0.0f,
-		-0.3f, 0.3f, 0.5f,0.0f, 0.0f, 0.0f,
+		-0.3f,
+		0.3f,
+		0.5f,
+		0.0f,
+		0.0f,
+		0.0f,
+		0.3f,
+		0.3f,
+		0.5f,
+		0.0f,
+		0.0f,
+		0.0f,
+		0.3f,
+		0.3f,
+		-0.5f,
+		0.0f,
+		0.0f,
+		0.0f,
+		0.3f,
+		0.3f,
+		-0.5f,
+		0.0f,
+		0.0f,
+		0.0f,
+		-0.3f,
+		0.3f,
+		-0.5f,
+		0.0f,
+		0.0f,
+		0.0f,
+		-0.3f,
+		0.3f,
+		0.5f,
+		0.0f,
+		0.0f,
+		0.0f,
 
 		// Hood
-		-0.5f, 0.0f, 0.5f,  0.0f, 0.0f, 0.0f,
-		0.5f, 0.0f, 0.5f,  0.0f, 0.0f, 0.0f,
-		0.3f, 0.3f, 0.5f,0.0f, 0.0f, 0.0f,
-		0.3f, 0.3f, 0.5f,  0.0f, 0.0f, 0.0f,
-		-0.3f, 0.3f, 0.5f,  0.0f, 0.0f, 0.0f,
-		-0.5f, 0.0f, 0.5f,0.0f, 0.0f, 0.0f,
+		-0.5f,
+		0.0f,
+		0.5f,
+		0.0f,
+		0.0f,
+		0.0f,
+		0.5f,
+		0.0f,
+		0.5f,
+		0.0f,
+		0.0f,
+		0.0f,
+		0.3f,
+		0.3f,
+		0.5f,
+		0.0f,
+		0.0f,
+		0.0f,
+		0.3f,
+		0.3f,
+		0.5f,
+		0.0f,
+		0.0f,
+		0.0f,
+		-0.3f,
+		0.3f,
+		0.5f,
+		0.0f,
+		0.0f,
+		0.0f,
+		-0.5f,
+		0.0f,
+		0.5f,
+		0.0f,
+		0.0f,
+		0.0f,
 
 		// Trunk
-		-0.5f, 0.0f, -0.5f,  0.0f, 0.0f, 0.0f,
-		0.5f, 0.0f, -0.5f,  0.0f, 0.0f, 0.0f,
-		0.3f, 0.3f, -0.5f,0.0f, 0.0f, 0.0f,
-		0.3f, 0.3f, -0.5f,  0.0f, 0.0f, 0.0f,
-		-0.3f, 0.3f, -0.5f,  0.0f, 0.0f, 0.0f,
-		-0.5f, 0.0f, -0.5f,0.0f, 0.0f, 0.0f,
+		-0.5f,
+		0.0f,
+		-0.5f,
+		0.0f,
+		0.0f,
+		0.0f,
+		0.5f,
+		0.0f,
+		-0.5f,
+		0.0f,
+		0.0f,
+		0.0f,
+		0.3f,
+		0.3f,
+		-0.5f,
+		0.0f,
+		0.0f,
+		0.0f,
+		0.3f,
+		0.3f,
+		-0.5f,
+		0.0f,
+		0.0f,
+		0.0f,
+		-0.3f,
+		0.3f,
+		-0.5f,
+		0.0f,
+		0.0f,
+		0.0f,
+		-0.5f,
+		0.0f,
+		-0.5f,
+		0.0f,
+		0.0f,
+		0.0f,
 
 		// Left window
-		-0.3f, 0.0f, 0.5f,  0.0f, 0.0f, 0.0f,
-		-0.3f, 0.3f, 0.5f,  0.0f, 0.0f, 0.0f,
-		-0.3f, 0.3f, -0.5f,0.0f, 0.0f, 0.0f,
-		-0.3f, 0.3f, -0.5f, 0.0f, 0.0f, 0.0f, 
-		-0.3f, 0.0f, -0.5f, 0.0f, 0.0f, 0.0f, 
-		-0.3f, 0.0f, 0.5f,0.0f, 0.0f, 0.0f,
+		-0.3f,
+		0.0f,
+		0.5f,
+		0.0f,
+		0.0f,
+		0.0f,
+		-0.3f,
+		0.3f,
+		0.5f,
+		0.0f,
+		0.0f,
+		0.0f,
+		-0.3f,
+		0.3f,
+		-0.5f,
+		0.0f,
+		0.0f,
+		0.0f,
+		-0.3f,
+		0.3f,
+		-0.5f,
+		0.0f,
+		0.0f,
+		0.0f,
+		-0.3f,
+		0.0f,
+		-0.5f,
+		0.0f,
+		0.0f,
+		0.0f,
+		-0.3f,
+		0.0f,
+		0.5f,
+		0.0f,
+		0.0f,
+		0.0f,
 
 		// Right window
-		0.3f, 0.0f, 0.5f,  0.0f, 0.0f, 0.0f,
-		0.3f, 0.3f, 0.5f,  0.0f, 0.0f, 0.0f,
-		0.3f, 0.3f, -0.5f,0.0f, 0.0f, 0.0f,
-		0.3f, 0.3f, -0.5f,  0.0f, 0.0f, 0.0f,
-		0.3f, 0.0f, -0.5f,  0.0f, 0.0f, 0.0f,
-		0.3f, 0.0f, 0.5f,0.0f, 0.0f, 0.0f,
+		0.3f,
+		0.0f,
+		0.5f,
+		0.0f,
+		0.0f,
+		0.0f,
+		0.3f,
+		0.3f,
+		0.5f,
+		0.0f,
+		0.0f,
+		0.0f,
+		0.3f,
+		0.3f,
+		-0.5f,
+		0.0f,
+		0.0f,
+		0.0f,
+		0.3f,
+		0.3f,
+		-0.5f,
+		0.0f,
+		0.0f,
+		0.0f,
+		0.3f,
+		0.0f,
+		-0.5f,
+		0.0f,
+		0.0f,
+		0.0f,
+		0.3f,
+		0.0f,
+		0.5f,
+		0.0f,
+		0.0f,
+		0.0f,
 	};
 
 	std::vector<float> frontLeftWheel = createQuadVertices(0.2f, 0.2f, 0.2f, glm::vec3(-0.5f, -0.4f, 0.8f), black);
@@ -266,24 +657,26 @@ int main()
 	glfwMakeContextCurrent(window);
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
-	#ifdef __APPLE__
+#ifdef __APPLE__
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
 	{
 		std::cout << "Failed to initialize GLAD" << std::endl;
 		return -1;
 	}
-	#endif
+#endif
 
-	#ifdef __linux__ 
-	if (glewInit() != GLEW_OK) {
+#ifdef __linux__
+	if (glewInit() != GLEW_OK)
+	{
 		std::cout << "Ocorreu um erro inciando o GLEW!" << std::endl;
 		return 1;
-	} else {
+	}
+	else
+	{
 		std::cout << "GLEW inicializado com sucesso!" << std::endl;
 		std::cout << glGetString(GL_VERSION) << std::endl;
 	}
-	#endif
-
+#endif
 
 	GLuint shaderTrack = compileShader(vertexShaderTrack, fragmentShaderTrack);
 	GLuint shaderCar = compileShader(vertexShaderCar, fragmentShaderCar);
@@ -308,10 +701,10 @@ int main()
 	glBindVertexArray(VAO_Car);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO_Car);
 	glBufferData(GL_ARRAY_BUFFER, carVertices.size() * sizeof(float), carVertices.data(), GL_STATIC_DRAW);
-		// vertices
+	// vertices
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *)0);
 	glEnableVertexAttribArray(0);
-		// cor
+	// cor
 	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
 
@@ -356,7 +749,7 @@ int main()
 		glm::mat4 model = glm::mat4(1.0f);
 		glm::mat4 view = glm::mat4(1.0f);
 		glm::mat4 projection = glm::mat4(1.0f);
-		view  = glm::translate(view, glm::vec3(0.0f, 0.0f, -5.0f));
+		view = glm::translate(view, glm::vec3(0.0f, 0.0f, -5.0f));
 		view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
 		projection = glm::perspective(glm::radians(zoom), 800.0f / 600.0f, 0.1f, 100.0f);
 
@@ -371,7 +764,17 @@ int main()
 		glBindVertexArray(VAO_Track);
 		glDrawArrays(GL_TRIANGLES, 0, 6);
 
-		model = glm::translate(model, glm::vec3(-3.0f, 0.0f, 0.0f));
+		float radius = 3.0f; // Raio do círculo
+		float speed = 2.0f;	 // Velocidade de rotação
+
+		float x = radius * cos(speed * glfwGetTime());
+		float z = radius * sin(speed * glfwGetTime());
+
+		// Calcula o angulo da rotação com base na tangente do círculo
+		float angle = atan2(-z, x);
+
+		model = glm::translate(model, glm::vec3(x, 0.0f, z));			 // Translação para a posição circular
+		model = glm::rotate(model, angle, glm::vec3(0.0f, speed, 0.0f)); // Rotação para apontar para onde está indo
 		glUseProgram(shaderCar);
 		glUniformMatrix4fv(glGetUniformLocation(shaderCar, "model"), 1, GL_FALSE, glm::value_ptr(model));
 		glUniformMatrix4fv(glGetUniformLocation(shaderCar, "view"), 1, GL_FALSE, glm::value_ptr(view));
@@ -440,8 +843,10 @@ void checkShaderCompileStatus(GLuint shader)
 void zoomControl(float z)
 {
 	zoom += z;
-	if (zoom < 1.0f) zoom = 1.0f;
-	if (zoom > 100.0f) zoom = 100.0f;
+	if (zoom < 1.0f)
+		zoom = 1.0f;
+	if (zoom > 100.0f)
+		zoom = 100.0f;
 }
 
 void viraCamera(float x, float y)
@@ -481,50 +886,50 @@ void resetCamera()
 	// printf("Pitch: %f\n", pitch);
 	// printf("Zoom: %f\n", zoom);
 
-    cameraPos   = glm::vec3(-0.1f, 3.0f,  10.0f);
-    cameraFront = glm::vec3(0.0f, -0.3f, -1.0f);
-    cameraUp    = glm::vec3(0.0f, 1.0f,  0.0f);
+	cameraPos = glm::vec3(-0.1f, 3.0f, 10.0f);
+	cameraFront = glm::vec3(0.0f, -0.3f, -1.0f);
+	cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
 
-    sensitivity = 1.0f;
-    yaw = -90.0f;
-    pitch = 0.0f;
-    zoom = 45.0f;
+	sensitivity = 1.0f;
+	yaw = -90.0f;
+	pitch = 0.0f;
+	zoom = 45.0f;
 }
 
 void processInput(GLFWwindow *window)
 {
-    const float cameraSpeed = 0.05f; // adjust accordingly
+	const float cameraSpeed = 0.05f; // adjust accordingly
 
-    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-        glfwSetWindowShouldClose(window, true);
+	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+		glfwSetWindowShouldClose(window, true);
 
-    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-        cameraPos += cameraSpeed * cameraFront;
-    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-        cameraPos -= cameraSpeed * cameraFront;
-    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-        cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
-    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-        cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
-    if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
-        cameraPos += glm::vec3(0.0f, 1.0f, 0.0f) * cameraSpeed;
-    if (glfwGetKey(window, GLFW_KEY_Z) == GLFW_PRESS)
-        cameraPos += glm::vec3(0.0f, -1.0f, 0.0f) * cameraSpeed;
+	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+		cameraPos += cameraSpeed * cameraFront;
+	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+		cameraPos -= cameraSpeed * cameraFront;
+	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+		cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+		cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+	if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
+		cameraPos += glm::vec3(0.0f, 1.0f, 0.0f) * cameraSpeed;
+	if (glfwGetKey(window, GLFW_KEY_Z) == GLFW_PRESS)
+		cameraPos += glm::vec3(0.0f, -1.0f, 0.0f) * cameraSpeed;
 
-    if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
-        viraCamera(0.0f,1.0f);
-    if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
-        viraCamera(0.0f,-1.0f);
-    if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
-        viraCamera(-1.0f,0.0f);
-    if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
-        viraCamera(1.0f,0.0f);
+	if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
+		viraCamera(0.0f, 1.0f);
+	if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
+		viraCamera(0.0f, -1.0f);
+	if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
+		viraCamera(-1.0f, 0.0f);
+	if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
+		viraCamera(1.0f, 0.0f);
 
-    if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
-        zoomControl(1.0f);
-    if (glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS)
-        zoomControl(-1.0f);
+	if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
+		zoomControl(1.0f);
+	if (glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS)
+		zoomControl(-1.0f);
 
 	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
-        resetCamera();
+		resetCamera();
 }
