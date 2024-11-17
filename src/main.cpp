@@ -87,6 +87,9 @@ glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
 glm::vec3 black = glm::vec3(0.0f, 0.0f, 0.0f);
 glm::vec3 pink = glm::vec3(0.867f, 0.667f, 0.933f);
 glm::vec3 green = glm::vec3(0.408f,0.722f,0.004f);
+glm::vec3 red = glm::vec3(1.0f, 0.0f, 0.0f);
+glm::vec3 white = glm::vec3(1.0f, 1.0f, 1.0f);
+glm::vec3 yellow = glm::vec3(1.0f, 0.5f, 0.0f);
 
 float sensitivity = 1.0f;
 float yaw = -90.0f;
@@ -351,6 +354,10 @@ void mergeVec(std::vector<float> &dest, std::vector<float> v1, std::vector<float
 	dest.insert(dest.end(), v1.begin(), v1.end());
 	dest.insert(dest.end(), v2.begin(), v2.end());
 }
+void mergeVec(std::vector<float> &dest, std::vector<float> v1)
+{
+	dest.insert(dest.end(), v1.begin(), v1.end());
+}
 
 std::vector<float> createCarVertices()
 {
@@ -412,14 +419,28 @@ std::vector<float> createCarVertices()
 		0.3f, 0.0f, -0.5f, 0.0f,0.451f,1.0f,
 		0.3f, 0.0f, 0.5f,  0.0f,0.451f,1.0f};
 
+	std::vector<float> lights;
+
+	std::vector<float> headlights = createQuadVertices(0.2f, 0.2f, 0.1f,     glm::vec3(-0.2f, -0.1f, 1.0f), white);
+	std::vector<float> rightHeadlight = createQuadVertices(0.2f, 0.2f, 0.1f, glm::vec3(0.2f,  -0.1f, 1.0f), white);
+
+	std::vector<float> taillights = createQuadVertices(0.25f, 0.1f, 0.1f,     glm::vec3(-0.2f, -0.1f, -1.0f), red);
+	std::vector<float> rightTaillight = createQuadVertices(0.25f, 0.1f, 0.1f, glm::vec3(0.2f,  -0.1f, -1.0f), red);
+
+	std::vector<float> leftBlinker = createQuadVertices(0.1f, 0.1f, 0.1f,     glm::vec3(-0.37f, -0.1f, -1.0f), yellow);
+	std::vector<float> rightBlinker = createQuadVertices(0.1f, 0.1f, 0.1f,    glm::vec3(0.37f,  -0.1f, -1.0f), yellow);
+
+	mergeVec(lights, headlights, rightHeadlight);
+	mergeVec(lights, taillights, rightTaillight);
+	mergeVec(lights, leftBlinker, rightBlinker);
+
 	std::vector<float> frontLeftWheel = createQuadVertices(0.2f, 0.2f, 0.2f, glm::vec3(-0.5f, -0.4f, 0.8f), black);
 	std::vector<float> frontRightWheel = createQuadVertices(0.2f, 0.2f, 0.2f, glm::vec3(0.5f, -0.4f, 0.8f), black);
 	std::vector<float> backLeftWheel = createQuadVertices(0.2f, 0.2f, 0.2f, glm::vec3(-0.5f, -0.4f, -0.8f), black);
 	std::vector<float> backRightWheel = createQuadVertices(0.2f, 0.2f, 0.2f, glm::vec3(0.5f, -0.4f, -0.8f), black);
 
 	std::vector<float> vertices;
-	vertices.reserve(bottom.size() + top.size() + frontLeftWheel.size() + frontRightWheel.size() + backLeftWheel.size() + backRightWheel.size());
-
+	mergeVec(vertices, lights);
 	mergeVec(vertices, bottom, top);
 	mergeVec(vertices, frontRightWheel, frontLeftWheel);
 	mergeVec(vertices, backRightWheel, backLeftWheel);
