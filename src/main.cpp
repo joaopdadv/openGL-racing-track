@@ -24,6 +24,7 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height);
 void processInput(GLFWwindow *window);
 void resetCamera();
 int init_gl_context();
+unsigned int load_texture(const char* path);
 
 const char *vertexShaderTrack = "#version 330 core\n"
 								"layout(location = 0) in vec3 position;"
@@ -103,12 +104,7 @@ typedef struct {
 	glm::vec3 position;
 	std::vector<float> vertices;
 	GLuint vao;
-} Tree;
-
-typedef struct {
-	glm::vec3 position;
-	std::vector<float> vertices;
-	GLuint vao;
+	bool texture; // se tem textura entao nao tem cor
 } Object;
 
 float groundVertices[] = {
@@ -119,6 +115,23 @@ float groundVertices[] = {
 	-5.0f, -0.6f, -5.0f, 0.0f, 1.0f,
 	5.0f, -0.6f, -5.0f, 1.0f, 1.0f};
 
+std::vector<float> createPlaneWithTexture(float width, float height, glm::vec3 center)
+{
+	float halfWidth = width / 2.0f;
+	float halfHeight = height / 2.0f;
+
+	std::vector<float> vertices = {
+		center.x - halfWidth, center.y - halfHeight, center.z, 0.0f, 0.0f,
+		center.x + halfWidth, center.y - halfHeight, center.z, 1.0f, 0.0f,
+		center.x + halfWidth, center.y + halfHeight, center.z, 1.0f, 1.0f,
+		center.x + halfWidth, center.y + halfHeight, center.z, 1.0f, 1.0f,
+		center.x - halfWidth, center.y + halfHeight, center.z, 0.0f, 1.0f,
+		center.x - halfWidth, center.y - halfHeight, center.z, 0.0f, 0.0f
+	};
+
+	return vertices;
+}
+
 std::vector<float> createQuadVertices(float width, float height, float depth, glm::vec3 center, glm::vec3 color)
 {
 	float halfWidth = width / 2.0f;
@@ -127,232 +140,52 @@ std::vector<float> createQuadVertices(float width, float height, float depth, gl
 
 	std::vector<float> vertices = {
 		// Front face
-		center.x - halfWidth,
-		center.y - halfHeight,
-		center.z + halfDepth,
-		color.x,
-		color.y,
-		color.z,
-		center.x + halfWidth,
-		center.y - halfHeight,
-		center.z + halfDepth,
-		color.x,
-		color.y,
-		color.z,
-		center.x + halfWidth,
-		center.y + halfHeight,
-		center.z + halfDepth,
-		color.x,
-		color.y,
-		color.z,
-		center.x + halfWidth,
-		center.y + halfHeight,
-		center.z + halfDepth,
-		color.x,
-		color.y,
-		color.z,
-		center.x - halfWidth,
-		center.y + halfHeight,
-		center.z + halfDepth,
-		color.x,
-		color.y,
-		color.z,
-		center.x - halfWidth,
-		center.y - halfHeight,
-		center.z + halfDepth,
-		color.x,
-		color.y,
-		color.z,
+		center.x - halfWidth, center.y - halfHeight, center.z + halfDepth, color.x, color.y, color.z,
+		center.x + halfWidth, center.y - halfHeight, center.z + halfDepth, color.x, color.y, color.z,
+		center.x + halfWidth, center.y + halfHeight, center.z + halfDepth, color.x, color.y, color.z,
+		center.x + halfWidth, center.y + halfHeight, center.z + halfDepth, color.x, color.y, color.z,
+		center.x - halfWidth, center.y + halfHeight, center.z + halfDepth, color.x, color.y, color.z,
+		center.x - halfWidth, center.y - halfHeight, center.z + halfDepth, color.x, color.y, color.z,
 
 		// Back face
-		center.x - halfWidth,
-		center.y - halfHeight,
-		center.z - halfDepth,
-		color.x,
-		color.y,
-		color.z,
-		center.x + halfWidth,
-		center.y - halfHeight,
-		center.z - halfDepth,
-		color.x,
-		color.y,
-		color.z,
-		center.x + halfWidth,
-		center.y + halfHeight,
-		center.z - halfDepth,
-		color.x,
-		color.y,
-		color.z,
-		center.x + halfWidth,
-		center.y + halfHeight,
-		center.z - halfDepth,
-		color.x,
-		color.y,
-		color.z,
-		center.x - halfWidth,
-		center.y + halfHeight,
-		center.z - halfDepth,
-		color.x,
-		color.y,
-		color.z,
-		center.x - halfWidth,
-		center.y - halfHeight,
-		center.z - halfDepth,
-		color.x,
-		color.y,
-		color.z,
+		center.x - halfWidth, center.y - halfHeight, center.z - halfDepth, color.x, color.y, color.z,
+		center.x + halfWidth, center.y - halfHeight, center.z - halfDepth, color.x, color.y, color.z,
+		center.x + halfWidth, center.y + halfHeight, center.z - halfDepth, color.x, color.y, color.z,
+		center.x + halfWidth, center.y + halfHeight, center.z - halfDepth, color.x, color.y, color.z,
+		center.x - halfWidth, center.y + halfHeight, center.z - halfDepth, color.x, color.y, color.z,
+		center.x - halfWidth, center.y - halfHeight, center.z - halfDepth, color.x, color.y, color.z,
 
 		// Left face
-		center.x - halfWidth,
-		center.y + halfHeight,
-		center.z + halfDepth,
-		color.x,
-		color.y,
-		color.z,
-		center.x - halfWidth,
-		center.y + halfHeight,
-		center.z - halfDepth,
-		color.x,
-		color.y,
-		color.z,
-		center.x - halfWidth,
-		center.y - halfHeight,
-		center.z - halfDepth,
-		color.x,
-		color.y,
-		color.z,
-		center.x - halfWidth,
-		center.y - halfHeight,
-		center.z - halfDepth,
-		color.x,
-		color.y,
-		color.z,
-		center.x - halfWidth,
-		center.y - halfHeight,
-		center.z + halfDepth,
-		color.x,
-		color.y,
-		color.z,
-		center.x - halfWidth,
-		center.y + halfHeight,
-		center.z + halfDepth,
-		color.x,
-		color.y,
-		color.z,
+		center.x - halfWidth, center.y + halfHeight, center.z + halfDepth, color.x, color.y, color.z,
+		center.x - halfWidth, center.y + halfHeight, center.z - halfDepth, color.x, color.y, color.z,
+		center.x - halfWidth, center.y - halfHeight, center.z - halfDepth, color.x, color.y, color.z,
+		center.x - halfWidth, center.y - halfHeight, center.z - halfDepth, color.x, color.y, color.z,
+		center.x - halfWidth, center.y - halfHeight, center.z + halfDepth, color.x, color.y, color.z,
+		center.x - halfWidth, center.y + halfHeight, center.z + halfDepth, color.x, color.y, color.z,
 
 		// Right face
-		center.x + halfWidth,
-		center.y + halfHeight,
-		center.z + halfDepth,
-		color.x,
-		color.y,
-		color.z,
-		center.x + halfWidth,
-		center.y + halfHeight,
-		center.z - halfDepth,
-		color.x,
-		color.y,
-		color.z,
-		center.x + halfWidth,
-		center.y - halfHeight,
-		center.z - halfDepth,
-		color.x,
-		color.y,
-		color.z,
-		center.x + halfWidth,
-		center.y - halfHeight,
-		center.z - halfDepth,
-		color.x,
-		color.y,
-		color.z,
-		center.x + halfWidth,
-		center.y - halfHeight,
-		center.z + halfDepth,
-		color.x,
-		color.y,
-		color.z,
-		center.x + halfWidth,
-		center.y + halfHeight,
-		center.z + halfDepth,
-		color.x,
-		color.y,
-		color.z,
+		center.x + halfWidth, center.y + halfHeight, center.z + halfDepth, color.x, color.y, color.z,
+		center.x + halfWidth, center.y + halfHeight, center.z - halfDepth, color.x, color.y, color.z,
+		center.x + halfWidth, center.y - halfHeight, center.z - halfDepth, color.x, color.y, color.z,
+		center.x + halfWidth, center.y - halfHeight, center.z - halfDepth, color.x, color.y, color.z,
+		center.x + halfWidth, center.y - halfHeight, center.z + halfDepth, color.x, color.y, color.z,
+		center.x + halfWidth, center.y + halfHeight, center.z + halfDepth, color.x, color.y, color.z,
 
 		// Top face
-		center.x - halfWidth,
-		center.y + halfHeight,
-		center.z - halfDepth,
-		color.x,
-		color.y,
-		color.z,
-		center.x + halfWidth,
-		center.y + halfHeight,
-		center.z - halfDepth,
-		color.x,
-		color.y,
-		color.z,
-		center.x + halfWidth,
-		center.y + halfHeight,
-		center.z + halfDepth,
-		color.x,
-		color.y,
-		color.z,
-		center.x + halfWidth,
-		center.y + halfHeight,
-		center.z + halfDepth,
-		color.x,
-		color.y,
-		color.z,
-		center.x - halfWidth,
-		center.y + halfHeight,
-		center.z + halfDepth,
-		color.x,
-		color.y,
-		color.z,
-		center.x - halfWidth,
-		center.y + halfHeight,
-		center.z - halfDepth,
-		color.x,
-		color.y,
-		color.z,
+		center.x - halfWidth, center.y + halfHeight, center.z - halfDepth, color.x, color.y, color.z,
+		center.x + halfWidth, center.y + halfHeight, center.z - halfDepth, color.x, color.y, color.z,
+		center.x + halfWidth, center.y + halfHeight, center.z + halfDepth, color.x, color.y, color.z,
+		center.x + halfWidth, center.y + halfHeight, center.z + halfDepth, color.x, color.y, color.z,
+		center.x - halfWidth, center.y + halfHeight, center.z + halfDepth, color.x, color.y, color.z,
+		center.x - halfWidth, center.y + halfHeight, center.z - halfDepth, color.x, color.y, color.z,
 
 		// Bottom face
-		center.x - halfWidth,
-		center.y - halfHeight,
-		center.z - halfDepth,
-		color.x,
-		color.y,
-		color.z,
-		center.x + halfWidth,
-		center.y - halfHeight,
-		center.z - halfDepth,
-		color.x,
-		color.y,
-		color.z,
-		center.x + halfWidth,
-		center.y - halfHeight,
-		center.z + halfDepth,
-		color.x,
-		color.y,
-		color.z,
-		center.x + halfWidth,
-		center.y - halfHeight,
-		center.z + halfDepth,
-		color.x,
-		color.y,
-		color.z,
-		center.x - halfWidth,
-		center.y - halfHeight,
-		center.z + halfDepth,
-		color.x,
-		color.y,
-		color.z,
-		center.x - halfWidth,
-		center.y - halfHeight,
-		center.z - halfDepth,
-		color.x,
-		color.y,
-		color.z,
+		center.x - halfWidth, center.y - halfHeight, center.z - halfDepth, color.x, color.y, color.z,
+		center.x + halfWidth, center.y - halfHeight, center.z - halfDepth, color.x, color.y, color.z,
+		center.x + halfWidth, center.y - halfHeight, center.z + halfDepth, color.x, color.y, color.z,
+		center.x + halfWidth, center.y - halfHeight, center.z + halfDepth, color.x, color.y, color.z,
+		center.x - halfWidth, center.y - halfHeight, center.z + halfDepth, color.x, color.y, color.z,
+		center.x - halfWidth, center.y - halfHeight, center.z - halfDepth, color.x, color.y, color.z,
 	};
 
 	return vertices;
@@ -495,22 +328,27 @@ void render_object(Object& obj, int triangles, GLuint shader, glm::mat4 model, g
 
 void glBind_object(Object& obj)
 {
+	int components = obj.texture ? 5 : 6;
+	
 	glBindVertexArray(obj.vao);
 	glBindBuffer(GL_ARRAY_BUFFER, obj.vao);
 	glBufferData(GL_ARRAY_BUFFER, obj.vertices.size() * sizeof(float), obj.vertices.data(), GL_STATIC_DRAW);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, components * sizeof(float), (void *)0);
 	glEnableVertexAttribArray(0);
-	// cor
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *)(3 * sizeof(float)));
-	glEnableVertexAttribArray(1);
+	// se tem textura entao nao tem cor
+	if (obj.texture) {
+		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, components * sizeof(float), (void *)(3 * sizeof(float)));
+		glEnableVertexAttribArray(1);
+	} else {
+		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, components * sizeof(float), (void *)(3 * sizeof(float)));
+		glEnableVertexAttribArray(1);
+	}
 }
 
 // TODOs
 /*
-	- posicionar camera conforme PDF
-	- adicionar textura no background
 	- adicionar textura na arvore do centro
-	- placa?
+	- placa
 */
 
 int main()
@@ -537,14 +375,18 @@ int main()
 	tree1.position = glm::vec3(0.0f, -0.20f, 0.0f);
 	tree1.vertices = createTreeVertices(tree1.position);
 	tree1.vao = VAO_Tree1;
+	tree1.texture = false;
 
 	car.position = glm::vec3(0.0f);
 	car.vertices = createCarVertices();
 	car.vao = VAO_Car;
+	car.texture = false;
 
-	background.position = glm::vec3(0.0f, 10.0f, -7.0f);
-	background.vertices = createQuadVertices(50.0f, 20.0f, 0.1f, background.position, black);
+
+	background.position = glm::vec3(0.0f, 4.0f, -7.0f);
+	background.vertices = createPlaneWithTexture(35.0f, 10.0f, background.position);
 	background.vao = VAO_Bg;
+	background.texture = true;
 
 	GLuint shaderTrack = compileShader(vertexShaderTrack, fragmentShaderTrack);
 	GLuint shaderCar = compileShader(vertexShaderCar, fragmentShaderCar);
@@ -563,32 +405,8 @@ int main()
 	glBind_object(background);
 
 	// LOAD TRACK TEXTURE
-	// -------------------------
-	unsigned int texture1;
-	// texture 1
-	// ---------
-	glGenTextures(1, &texture1);
-	glBindTexture(GL_TEXTURE_2D, texture1);
-	// set the texture wrapping parameters
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	// set texture filtering parameters
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	// load image, create texture and generate mipmaps
-	int width, height, nrChannels;
-	stbi_set_flip_vertically_on_load(true); // tell stb_image.h to flip loaded texture's on the y-axis.
-	unsigned char *data = stbi_load("./images/track2.jpg", &width, &height, &nrChannels, 0);
-	if (data)
-	{
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-		glGenerateMipmap(GL_TEXTURE_2D);
-	}
-	else
-	{
-		std::cout << "Failed to load texture aaaaa" << std::endl;
-	}
-	stbi_image_free(data);
+	unsigned int track_texture = load_texture("./images/track2.jpg");
+	unsigned int test_texture = load_texture("./images/crowd-1.jpg");
 
 	glEnable(GL_DEPTH_TEST);
 
@@ -609,7 +427,7 @@ int main()
 		projection = glm::perspective(glm::radians(zoom), 800.0f / 600.0f, 0.1f, 100.0f);
 
 		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, texture1);
+		glBindTexture(GL_TEXTURE_2D, track_texture);
 
 		model = glm::mat4(1.0f);
 		glUseProgram(shaderTrack);
@@ -620,10 +438,12 @@ int main()
 		glDrawArrays(GL_TRIANGLES, 0, 6);
 
 		// bg
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, test_texture);
 		model = glm::mat4(1.0f);
-		render_object(background, 6, shaderCar, model, view, projection);
+		render_object(background, 6, shaderTrack, model, view, projection);
 
-		// Tree
+		// tree
 		render_tree(tree1, shaderCar, model, view, projection);
 
 		float radius = 3.0f; // Raio do círculo
@@ -832,4 +652,33 @@ int init_gl_context()
 #endif
 
 	return 1;
+}
+
+unsigned int load_texture(const char* path)
+{
+	// -------------------------
+	unsigned int texture1;
+	// texture 1
+	// ---------
+	glGenTextures(1, &texture1);
+	glBindTexture(GL_TEXTURE_2D, texture1);
+	// set the texture wrapping parameters
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	// set texture filtering parameters
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	// load image, create texture and generate mipmaps
+	int width, height, nrChannels;
+	stbi_set_flip_vertically_on_load(true); // tell stb_image.h to flip loaded texture's on the y-axis.
+	unsigned char *data = stbi_load(path, &width, &height, &nrChannels, 0);
+	if (data) {
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+		glGenerateMipmap(GL_TEXTURE_2D);
+	} else {
+		std::cout << "Failed to load texture aaaaa" << std::endl;
+	}
+	stbi_image_free(data);
+
+	return texture1;
 }
