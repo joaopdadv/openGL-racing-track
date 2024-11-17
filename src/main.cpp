@@ -86,11 +86,18 @@ glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
 // cores
 glm::vec3 black = glm::vec3(0.0f, 0.0f, 0.0f);
 glm::vec3 pink = glm::vec3(0.867f, 0.667f, 0.933f);
+glm::vec3 green = glm::vec3(0.408f,0.722f,0.004f);
 
 float sensitivity = 1.0f;
 float yaw = -90.0f;
 float pitch = 0.0f;
 float zoom = 45.0f;
+
+typedef struct {
+	glm::vec3 position;
+	std::vector<float> vertices;
+	GLuint vao;
+} Tree;
 
 float groundVertices[] = {
 	-5.0f, -0.6f, 5.0f, 0.0f, 0.0f,
@@ -348,275 +355,62 @@ void mergeVec(std::vector<float> &dest, std::vector<float> v1, std::vector<float
 std::vector<float> createCarVertices()
 {
 	std::vector<float> bottom = createQuadVertices(1.0f, 0.5f, 2.0f,
-												   glm::vec3(0.0f, -0.25f, 0.0f),
-												   black);
+												   glm::vec3(0.0f, -0.20f, 0.0f),
+												   pink);
 
 	std::vector<float> top = {
-		// Roof of the car
-		-0.3f,
-		0.0f,
-		-0.5f,
-		0.0f,
-		0.0f,
-		0.0f,
-		0.3f,
-		0.0f,
-		-0.5f,
-		0.0f,
-		0.0f,
-		0.0f,
-		0.3f,
-		0.3f,
-		-0.5f,
-		0.0f,
-		0.0f,
-		0.0f,
-		0.3f,
-		0.3f,
-		-0.5f,
-		0.0f,
-		0.0f,
-		0.0f,
-		-0.3f,
-		0.3f,
-		-0.5f,
-		0.0f,
-		0.0f,
-		0.0f,
-		-0.3f,
-		0.0f,
-		-0.5f,
-		0.0f,
-		0.0f,
-		0.0f,
+		-0.3f, 0.0f, -0.5f, 0.0f,0.451f,1.0f,
+		0.3f, 0.0f, -0.5f,  0.0f,0.451f,1.0f,
+		0.3f, 0.3f, -0.5f,  0.0f,0.451f,1.0f,
+		0.3f, 0.3f, -0.5f,  0.0f,0.451f,1.0f,
+		-0.3f, 0.3f, -0.5f, 0.0f,0.451f,1.0f,
+		-0.3f, 0.0f, -0.5f, 0.0f,0.451f,1.0f,
+		-0.3f, 0.0f, 0.5f,  0.0f,0.451f,1.0f,
+		0.3f, 0.0f, 0.5f,   0.0f,0.451f,1.0f,
+		0.3f, 0.3f, 0.5f,   0.0f,0.451f,1.0f,
+		0.3f, 0.3f, 0.5f,   0.0f,0.451f,1.0f,
+		-0.3f, 0.3f, 0.5f,  0.0f,0.451f,1.0f,
+		-0.3f, 0.0f, 0.5f,  0.0f,0.451f,1.0f,
 
-		-0.3f,
-		0.0f,
-		0.5f,
-		0.0f,
-		0.0f,
-		0.0f,
-		0.3f,
-		0.0f,
-		0.5f,
-		0.0f,
-		0.0f,
-		0.0f,
-		0.3f,
-		0.3f,
-		0.5f,
-		0.0f,
-		0.0f,
-		0.0f,
-		0.3f,
-		0.3f,
-		0.5f,
-		0.0f,
-		0.0f,
-		0.0f,
-		-0.3f,
-		0.3f,
-		0.5f,
-		0.0f,
-		0.0f,
-		0.0f,
-		-0.3f,
-		0.0f,
-		0.5f,
-		0.0f,
-		0.0f,
-		0.0f,
+		// top
+		-0.3f, 0.3f, 0.5f,  0.867f, 0.667f, 0.933f,
+		0.3f, 0.3f, 0.5f,   0.867f, 0.667f, 0.933f,
+		0.3f, 0.3f, -0.5f,  0.867f, 0.667f, 0.933f,
+		0.3f, 0.3f, -0.5f,  0.867f, 0.667f, 0.933f,
+		-0.3f, 0.3f, -0.5f, 0.867f, 0.667f, 0.933f,
+		-0.3f, 0.3f, 0.5f,  0.867f, 0.667f, 0.933f,
 
-		// Front windshield
-		-0.3f,
-		0.3f,
-		0.5f,
-		0.0f,
-		0.0f,
-		0.0f,
-		0.3f,
-		0.3f,
-		0.5f,
-		0.0f,
-		0.0f,
-		0.0f,
-		0.3f,
-		0.3f,
-		-0.5f,
-		0.0f,
-		0.0f,
-		0.0f,
-		0.3f,
-		0.3f,
-		-0.5f,
-		0.0f,
-		0.0f,
-		0.0f,
-		-0.3f,
-		0.3f,
-		-0.5f,
-		0.0f,
-		0.0f,
-		0.0f,
-		-0.3f,
-		0.3f,
-		0.5f,
-		0.0f,
-		0.0f,
-		0.0f,
+		// front
+		-0.5f, 0.0f, 0.5f, 0.0f,0.451f,1.0f,
+		0.5f, 0.0f, 0.5f,  0.0f,0.451f,1.0f,
+		0.3f, 0.3f, 0.5f,  0.0f,0.451f,1.0f,
+		0.3f, 0.3f, 0.5f,  0.0f,0.451f,1.0f,
+		-0.3f, 0.3f, 0.5f, 0.0f,0.451f,1.0f,
+		-0.5f, 0.0f, 0.5f, 0.0f,0.451f,1.0f,
 
-		// Hood
-		-0.5f,
-		0.0f,
-		0.5f,
-		0.0f,
-		0.0f,
-		0.0f,
-		0.5f,
-		0.0f,
-		0.5f,
-		0.0f,
-		0.0f,
-		0.0f,
-		0.3f,
-		0.3f,
-		0.5f,
-		0.0f,
-		0.0f,
-		0.0f,
-		0.3f,
-		0.3f,
-		0.5f,
-		0.0f,
-		0.0f,
-		0.0f,
-		-0.3f,
-		0.3f,
-		0.5f,
-		0.0f,
-		0.0f,
-		0.0f,
-		-0.5f,
-		0.0f,
-		0.5f,
-		0.0f,
-		0.0f,
-		0.0f,
-
-		// Trunk
-		-0.5f,
-		0.0f,
-		-0.5f,
-		0.0f,
-		0.0f,
-		0.0f,
-		0.5f,
-		0.0f,
-		-0.5f,
-		0.0f,
-		0.0f,
-		0.0f,
-		0.3f,
-		0.3f,
-		-0.5f,
-		0.0f,
-		0.0f,
-		0.0f,
-		0.3f,
-		0.3f,
-		-0.5f,
-		0.0f,
-		0.0f,
-		0.0f,
-		-0.3f,
-		0.3f,
-		-0.5f,
-		0.0f,
-		0.0f,
-		0.0f,
-		-0.5f,
-		0.0f,
-		-0.5f,
-		0.0f,
-		0.0f,
-		0.0f,
+		// back
+		-0.5f, 0.0f, -0.5f, 0.0f,0.451f,1.0f,
+		0.5f, 0.0f, -0.5f,  0.0f,0.451f,1.0f,
+		0.3f, 0.3f, -0.5f,  0.0f,0.451f,1.0f,
+		0.3f, 0.3f, -0.5f,  0.0f,0.451f,1.0f,
+		-0.3f, 0.3f, -0.5f, 0.0f,0.451f,1.0f,
+		-0.5f, 0.0f, -0.5f, 0.0f,0.451f,1.0f,
 
 		// Left window
-		-0.3f,
-		0.0f,
-		0.5f,
-		0.0f,
-		0.0f,
-		0.0f,
-		-0.3f,
-		0.3f,
-		0.5f,
-		0.0f,
-		0.0f,
-		0.0f,
-		-0.3f,
-		0.3f,
-		-0.5f,
-		0.0f,
-		0.0f,
-		0.0f,
-		-0.3f,
-		0.3f,
-		-0.5f,
-		0.0f,
-		0.0f,
-		0.0f,
-		-0.3f,
-		0.0f,
-		-0.5f,
-		0.0f,
-		0.0f,
-		0.0f,
-		-0.3f,
-		0.0f,
-		0.5f,
-		0.0f,
-		0.0f,
-		0.0f,
+		-0.3f, 0.0f, 0.5f,  0.0f,0.451f,1.0f,
+		-0.3f, 0.3f, 0.5f,  0.0f,0.451f,1.0f,
+		-0.3f, 0.3f, -0.5f, 0.0f,0.451f,1.0f,
+		-0.3f, 0.3f, -0.5f, 0.0f,0.451f,1.0f,
+		-0.3f, 0.0f, -0.5f, 0.0f,0.451f,1.0f,
+		-0.3f, 0.0f, 0.5f,  0.0f,0.451f,1.0f,
 
 		// Right window
-		0.3f,
-		0.0f,
-		0.5f,
-		0.0f,
-		0.0f,
-		0.0f,
-		0.3f,
-		0.3f,
-		0.5f,
-		0.0f,
-		0.0f,
-		0.0f,
-		0.3f,
-		0.3f,
-		-0.5f,
-		0.0f,
-		0.0f,
-		0.0f,
-		0.3f,
-		0.3f,
-		-0.5f,
-		0.0f,
-		0.0f,
-		0.0f,
-		0.3f,
-		0.0f,
-		-0.5f,
-		0.0f,
-		0.0f,
-		0.0f,
-		0.3f,
-		0.0f,
-		0.5f,
-		0.0f,
-		0.0f,
-		0.0f,
-	};
+		0.3f, 0.0f, 0.5f,  0.0f,0.451f,1.0f,
+		0.3f, 0.3f, 0.5f,  0.0f,0.451f,1.0f,
+		0.3f, 0.3f, -0.5f, 0.0f,0.451f,1.0f,
+		0.3f, 0.3f, -0.5f, 0.0f,0.451f,1.0f,
+		0.3f, 0.0f, -0.5f, 0.0f,0.451f,1.0f,
+		0.3f, 0.0f, 0.5f,  0.0f,0.451f,1.0f};
 
 	std::vector<float> frontLeftWheel = createQuadVertices(0.2f, 0.2f, 0.2f, glm::vec3(-0.5f, -0.4f, 0.8f), black);
 	std::vector<float> frontRightWheel = createQuadVertices(0.2f, 0.2f, 0.2f, glm::vec3(0.5f, -0.4f, 0.8f), black);
@@ -627,16 +421,59 @@ std::vector<float> createCarVertices()
 	vertices.reserve(bottom.size() + top.size() + frontLeftWheel.size() + frontRightWheel.size() + backLeftWheel.size() + backRightWheel.size());
 
 	mergeVec(vertices, bottom, top);
-	mergeVec(vertices, frontRightWheel, backLeftWheel);
-	mergeVec(vertices, backRightWheel, backRightWheel);
+	mergeVec(vertices, frontRightWheel, frontLeftWheel);
+	mergeVec(vertices, backRightWheel, backLeftWheel);
 
 	return vertices;
 }
 
+std::vector<float> createTreeVertices(glm::vec3 position)
+{
+	std::vector<float> trunk = createQuadVertices(0.5f, 1.0f, 0.1f,
+												   position,
+												   pink);
+	return trunk;
+}
+
+void render_tree(Tree& tree, GLuint shader, glm::mat4 model, glm::mat4 view, glm::mat4 projection)
+{
+	model = glm::mat4(1.0f);
+	glUseProgram(shader);
+	glUniformMatrix4fv(glGetUniformLocation(shader, "model"), 1, GL_FALSE, glm::value_ptr(model));
+	glUniformMatrix4fv(glGetUniformLocation(shader, "view"), 1, GL_FALSE, glm::value_ptr(view));
+	glUniformMatrix4fv(glGetUniformLocation(shader, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+	glBindVertexArray(tree.vao);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+
+	model = glm::rotate(model, glm::radians(90.0f), tree.position);
+	glUniformMatrix4fv(glGetUniformLocation(shader, "model"), 1, GL_FALSE, glm::value_ptr(model));
+	glUniformMatrix4fv(glGetUniformLocation(shader, "view"), 1, GL_FALSE, glm::value_ptr(view));
+	glUniformMatrix4fv(glGetUniformLocation(shader, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+	glBindVertexArray(tree.vao);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+}
+
+void glBind_tree(Tree& tree)
+{
+	glBindVertexArray(tree.vao);
+	glBindBuffer(GL_ARRAY_BUFFER, tree.vao);
+	glBufferData(GL_ARRAY_BUFFER, tree.vertices.size() * sizeof(float), tree.vertices.data(), GL_STATIC_DRAW);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *)0);
+	glEnableVertexAttribArray(0);
+	// cor
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *)(3 * sizeof(float)));
+	glEnableVertexAttribArray(1);
+}
+
 int main()
 {
-	std::vector<float> carVertices = createCarVertices();
 	resetCamera();
+
+	std::vector<float> carVertices = createCarVertices();
+
+	Tree tree1;
+	tree1.position = glm::vec3(0.0f, -0.20f, 0.0f);
+	tree1.vertices = createTreeVertices(tree1.position);
 
 	glfwInit();
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -681,12 +518,16 @@ int main()
 	GLuint shaderTrack = compileShader(vertexShaderTrack, fragmentShaderTrack);
 	GLuint shaderCar = compileShader(vertexShaderCar, fragmentShaderCar);
 
-	GLuint VBO_Track, VAO_Track, VBO_Car, VAO_Car;
+	GLuint VBO_Track, VAO_Track, VBO_Car, VAO_Car, VBO_Tree1, VAO_Tree1;
 	glGenVertexArrays(1, &VAO_Track);
 	glGenBuffers(1, &VBO_Track);
 
 	glGenVertexArrays(1, &VAO_Car);
 	glGenBuffers(1, &VBO_Car);
+
+	glGenVertexArrays(1, &VAO_Tree1);
+	glGenBuffers(1, &VBO_Tree1);
+	tree1.vao = VAO_Tree1;
 
 	// TRACK
 	glBindVertexArray(VAO_Track);
@@ -707,6 +548,9 @@ int main()
 	// cor
 	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
+
+	// TREES
+	glBind_tree(tree1);
 
 	// LOAD TRACK TEXTURE
 	// -------------------------
@@ -745,6 +589,7 @@ int main()
 
 		// Limpar a tela
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glClearColor(green.x, green.y, green.z, 1.0f);
 
 		glm::mat4 model = glm::mat4(1.0f);
 		glm::mat4 view = glm::mat4(1.0f);
@@ -764,8 +609,18 @@ int main()
 		glBindVertexArray(VAO_Track);
 		glDrawArrays(GL_TRIANGLES, 0, 6);
 
+
+		// Tree
+		render_tree(tree1, shaderCar, model, view, projection);
+
+		// TODOs
+		// - teto do carro
+		// - placa?
+		// posicao da camera
+		// - plano de fundo?
+
 		float radius = 3.0f; // Raio do círculo
-		float speed = 2.0f;	 // Velocidade de rotação
+		float speed = 1.0f;	 // Velocidade de rotação
 
 		float x = radius * cos(speed * glfwGetTime());
 		float z = radius * sin(speed * glfwGetTime());
@@ -877,15 +732,9 @@ void checkProgramLinkStatus(GLuint program)
 		fprintf(stderr, "Erro ao linkar programa: %s\n", infoLog);
 	}
 }
+
 void resetCamera()
 {
-	// printf("CameraPos: %f, %f, %f\n", cameraPos.x, cameraPos.y, cameraPos.z);
-	// printf("CameraFront: %f, %f, %f\n", cameraFront.x, cameraFront.y, cameraFront.z);
-	// printf("CameraUp: %f, %f, %f\n", cameraUp.x, cameraUp.y, cameraUp.z);
-	// printf("Yaw: %f\n", yaw);
-	// printf("Pitch: %f\n", pitch);
-	// printf("Zoom: %f\n", zoom);
-
 	cameraPos = glm::vec3(-0.1f, 3.0f, 10.0f);
 	cameraFront = glm::vec3(0.0f, -0.3f, -1.0f);
 	cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
