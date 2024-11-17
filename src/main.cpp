@@ -23,6 +23,7 @@ void checkProgramLinkStatus(GLuint program);
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
 void processInput(GLFWwindow *window);
 void resetCamera();
+int init_gl_context();
 
 const char *vertexShaderTrack = "#version 330 core\n"
 								"layout(location = 0) in vec3 position;"
@@ -96,11 +97,19 @@ float yaw = -90.0f;
 float pitch = 0.0f;
 float zoom = 45.0f;
 
+GLFWwindow* window;
+
 typedef struct {
 	glm::vec3 position;
 	std::vector<float> vertices;
 	GLuint vao;
 } Tree;
+
+typedef struct {
+	glm::vec3 position;
+	std::vector<float> vertices;
+	GLuint vao;
+} Object;
 
 float groundVertices[] = {
 	-5.0f, -0.6f, 5.0f, 0.0f, 0.0f,
@@ -456,7 +465,7 @@ std::vector<float> createTreeVertices(glm::vec3 position)
 	return trunk;
 }
 
-void render_tree(Tree& tree, GLuint shader, glm::mat4 model, glm::mat4 view, glm::mat4 projection)
+void render_tree(Object& tree, GLuint shader, glm::mat4 model, glm::mat4 view, glm::mat4 projection)
 {
 	model = glm::mat4(1.0f);
 	glUseProgram(shader);
@@ -474,11 +483,21 @@ void render_tree(Tree& tree, GLuint shader, glm::mat4 model, glm::mat4 view, glm
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 }
 
-void glBind_tree(Tree& tree)
+void render_object(Object& obj, int triangles, GLuint shader, glm::mat4 model, glm::mat4 view, glm::mat4 projection)
 {
-	glBindVertexArray(tree.vao);
-	glBindBuffer(GL_ARRAY_BUFFER, tree.vao);
-	glBufferData(GL_ARRAY_BUFFER, tree.vertices.size() * sizeof(float), tree.vertices.data(), GL_STATIC_DRAW);
+	glUseProgram(shader);
+	glUniformMatrix4fv(glGetUniformLocation(shader, "model"), 1, GL_FALSE, glm::value_ptr(model));
+	glUniformMatrix4fv(glGetUniformLocation(shader, "view"), 1, GL_FALSE, glm::value_ptr(view));
+	glUniformMatrix4fv(glGetUniformLocation(shader, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+	glBindVertexArray(obj.vao);
+	glDrawArrays(GL_TRIANGLES, 0, triangles);
+}
+
+void glBind_object(Object& obj)
+{
+	glBindVertexArray(obj.vao);
+	glBindBuffer(GL_ARRAY_BUFFER, obj.vao);
+	glBufferData(GL_ARRAY_BUFFER, obj.vertices.size() * sizeof(float), obj.vertices.data(), GL_STATIC_DRAW);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *)0);
 	glEnableVertexAttribArray(0);
 	// cor
@@ -488,9 +507,6 @@ void glBind_tree(Tree& tree)
 
 // TODOs
 /*
-	- ao inves de uma struct Tree fazer uma struct Object
-		- glBind_object(Object& obj)
-		- usar nos casos que eh possivel
 	- posicionar camera conforme PDF
 	- adicionar textura no background
 	- adicionar textura na arvore do centro
@@ -499,58 +515,8 @@ void glBind_tree(Tree& tree)
 
 int main()
 {
+	if (init_gl_context() < 0) return 1;
 	resetCamera();
-
-	std::vector<float> carVertices = createCarVertices();
-
-	Tree tree1;
-	tree1.position = glm::vec3(0.0f, -0.20f, 0.0f);
-	tree1.vertices = createTreeVertices(tree1.position);
-
-	std::vector<float> bgVert =  createQuadVertices(50.0f, 20.0f, 0.1f, glm::vec3(0.0f, 10.0f, -7.0f), black);
-
-	glfwInit();
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
-#ifdef __APPLE__
-	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-#endif
-
-	GLFWwindow *window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "LearnOpenGL", NULL, NULL);
-	if (window == NULL)
-	{
-		std::cout << "Failed to create GLFW window" << std::endl;
-		glfwTerminate();
-		return -1;
-	}
-	glfwMakeContextCurrent(window);
-	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-
-#ifdef __APPLE__
-	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
-	{
-		std::cout << "Failed to initialize GLAD" << std::endl;
-		return -1;
-	}
-#endif
-
-#ifdef __linux__
-	if (glewInit() != GLEW_OK)
-	{
-		std::cout << "Ocorreu um erro inciando o GLEW!" << std::endl;
-		return 1;
-	}
-	else
-	{
-		std::cout << "GLEW inicializado com sucesso!" << std::endl;
-		std::cout << glGetString(GL_VERSION) << std::endl;
-	}
-#endif
-
-	GLuint shaderTrack = compileShader(vertexShaderTrack, fragmentShaderTrack);
-	GLuint shaderCar = compileShader(vertexShaderCar, fragmentShaderCar);
 
 	GLuint VBO_Track, VAO_Track, VBO_Car, VAO_Car, VBO_Tree1, VAO_Tree1;
 	GLuint VBO_Bg, VAO_Bg;
@@ -562,10 +528,26 @@ int main()
 
 	glGenVertexArrays(1, &VAO_Tree1);
 	glGenBuffers(1, &VBO_Tree1);
-	tree1.vao = VAO_Tree1;
 
 	glGenVertexArrays(1, &VAO_Bg);
 	glGenBuffers(1, &VBO_Bg);
+
+	Object tree1, car, background;
+
+	tree1.position = glm::vec3(0.0f, -0.20f, 0.0f);
+	tree1.vertices = createTreeVertices(tree1.position);
+	tree1.vao = VAO_Tree1;
+
+	car.position = glm::vec3(0.0f);
+	car.vertices = createCarVertices();
+	car.vao = VAO_Car;
+
+	background.position = glm::vec3(0.0f, 10.0f, -7.0f);
+	background.vertices = createQuadVertices(50.0f, 20.0f, 0.1f, background.position, black);
+	background.vao = VAO_Bg;
+
+	GLuint shaderTrack = compileShader(vertexShaderTrack, fragmentShaderTrack);
+	GLuint shaderCar = compileShader(vertexShaderCar, fragmentShaderCar);
 
 	// TRACK
 	glBindVertexArray(VAO_Track);
@@ -576,29 +558,9 @@ int main()
 	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
 
-	// CAR
-	glBindVertexArray(VAO_Car);
-	glBindBuffer(GL_ARRAY_BUFFER, VBO_Car);
-	glBufferData(GL_ARRAY_BUFFER, carVertices.size() * sizeof(float), carVertices.data(), GL_STATIC_DRAW);
-	// vertices
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *)0);
-	glEnableVertexAttribArray(0);
-	// cor
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *)(3 * sizeof(float)));
-	glEnableVertexAttribArray(1);
-
-	// TREES
-	glBind_tree(tree1);
-
-	// Bg
-	glBindVertexArray(VAO_Bg);
-	glBindBuffer(GL_ARRAY_BUFFER, VBO_Bg);
-	glBufferData(GL_ARRAY_BUFFER, bgVert.size() * sizeof(float), bgVert.data(), GL_STATIC_DRAW);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *)0);
-	glEnableVertexAttribArray(0);
-	// cor
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *)(3 * sizeof(float)));
-	glEnableVertexAttribArray(1);
+	glBind_object(car);
+	glBind_object(tree1);
+	glBind_object(background);
 
 	// LOAD TRACK TEXTURE
 	// -------------------------
@@ -659,12 +621,7 @@ int main()
 
 		// bg
 		model = glm::mat4(1.0f);
-		glUseProgram(shaderCar);
-		glUniformMatrix4fv(glGetUniformLocation(shaderCar, "model"), 1, GL_FALSE, glm::value_ptr(model));
-		glUniformMatrix4fv(glGetUniformLocation(shaderCar, "view"), 1, GL_FALSE, glm::value_ptr(view));
-		glUniformMatrix4fv(glGetUniformLocation(shaderCar, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
-		glBindVertexArray(VAO_Bg);
-		glDrawArrays(GL_TRIANGLES, 0, 6);
+		render_object(background, 6, shaderCar, model, view, projection);
 
 		// Tree
 		render_tree(tree1, shaderCar, model, view, projection);
@@ -680,12 +637,7 @@ int main()
 
 		model = glm::translate(model, glm::vec3(x, 0.0f, z));			 // Translação para a posição circular
 		model = glm::rotate(model, angle, glm::vec3(0.0f, speed, 0.0f)); // Rotação para apontar para onde está indo
-		glUseProgram(shaderCar);
-		glUniformMatrix4fv(glGetUniformLocation(shaderCar, "model"), 1, GL_FALSE, glm::value_ptr(model));
-		glUniformMatrix4fv(glGetUniformLocation(shaderCar, "view"), 1, GL_FALSE, glm::value_ptr(view));
-		glUniformMatrix4fv(glGetUniformLocation(shaderCar, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
-		glBindVertexArray(VAO_Car);
-		glDrawArrays(GL_TRIANGLES, 0, 36 * 1000);
+		render_object(car, 36*1000, shaderCar, model, view, projection);
 
 		// Trocar os buffers da janela
 		glfwSwapBuffers(window);
@@ -696,6 +648,10 @@ int main()
 	glDeleteBuffers(1, &VBO_Track);
 	glDeleteVertexArrays(1, &VAO_Car);
 	glDeleteBuffers(1, &VBO_Car);
+	glDeleteVertexArrays(1, &VAO_Bg);
+	glDeleteBuffers(1, &VBO_Bg);
+	glDeleteVertexArrays(1, &VAO_Tree1);
+	glDeleteBuffers(1, &VBO_Tree1);
 	glDeleteProgram(shaderTrack);
 	glDeleteProgram(shaderCar);
 
@@ -785,8 +741,8 @@ void checkProgramLinkStatus(GLuint program)
 
 void resetCamera()
 {
-	cameraPos = glm::vec3(-0.1f, 3.0f, 10.0f);
-	cameraFront = glm::vec3(0.0f, -0.3f, -1.0f);
+	cameraPos = glm::vec3(-4.7f, 3.0f, 10.0f);
+	cameraFront = glm::vec3(0.4f, -0.3f, -1.0f);
 	cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
 
 	sensitivity = 1.0f;
@@ -831,4 +787,49 @@ void processInput(GLFWwindow *window)
 
 	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
 		resetCamera();
+}
+
+int init_gl_context()
+{
+	glfwInit();
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+#ifdef __APPLE__
+	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+#endif
+
+	window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "Race Track", NULL, NULL);
+	if (window == NULL)
+	{
+		std::cout << "Failed to create GLFW window" << std::endl;
+		glfwTerminate();
+		return -1;
+	}
+	glfwMakeContextCurrent(window);
+	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+
+#ifdef __APPLE__
+	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+	{
+		std::cout << "Failed to initialize GLAD" << std::endl;
+		return -1;
+	}
+#endif
+
+#ifdef __linux__
+	if (glewInit() != GLEW_OK)
+	{
+		std::cout << "Ocorreu um erro inciando o GLEW!" << std::endl;
+		return -1;
+	}
+	else
+	{
+		std::cout << "GLEW inicializado com sucesso!" << std::endl;
+		std::cout << glGetString(GL_VERSION) << std::endl;
+	}
+#endif
+
+	return 1;
 }
