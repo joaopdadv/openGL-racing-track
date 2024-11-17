@@ -465,6 +465,17 @@ void glBind_tree(Tree& tree)
 	glEnableVertexAttribArray(1);
 }
 
+// TODOs
+/*
+	- ao inves de uma struct Tree fazer uma struct Object
+		- glBind_object(Object& obj)
+		- usar nos casos que eh possivel
+	- posicionar camera conforme PDF
+	- adicionar textura no background
+	- adicionar textura na arvore do centro
+	- placa?
+*/
+
 int main()
 {
 	resetCamera();
@@ -474,6 +485,8 @@ int main()
 	Tree tree1;
 	tree1.position = glm::vec3(0.0f, -0.20f, 0.0f);
 	tree1.vertices = createTreeVertices(tree1.position);
+
+	std::vector<float> bgVert =  createQuadVertices(50.0f, 20.0f, 0.1f, glm::vec3(0.0f, 10.0f, -7.0f), black);
 
 	glfwInit();
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -519,6 +532,7 @@ int main()
 	GLuint shaderCar = compileShader(vertexShaderCar, fragmentShaderCar);
 
 	GLuint VBO_Track, VAO_Track, VBO_Car, VAO_Car, VBO_Tree1, VAO_Tree1;
+	GLuint VBO_Bg, VAO_Bg;
 	glGenVertexArrays(1, &VAO_Track);
 	glGenBuffers(1, &VBO_Track);
 
@@ -528,6 +542,9 @@ int main()
 	glGenVertexArrays(1, &VAO_Tree1);
 	glGenBuffers(1, &VBO_Tree1);
 	tree1.vao = VAO_Tree1;
+
+	glGenVertexArrays(1, &VAO_Bg);
+	glGenBuffers(1, &VBO_Bg);
 
 	// TRACK
 	glBindVertexArray(VAO_Track);
@@ -551,6 +568,16 @@ int main()
 
 	// TREES
 	glBind_tree(tree1);
+
+	// Bg
+	glBindVertexArray(VAO_Bg);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO_Bg);
+	glBufferData(GL_ARRAY_BUFFER, bgVert.size() * sizeof(float), bgVert.data(), GL_STATIC_DRAW);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *)0);
+	glEnableVertexAttribArray(0);
+	// cor
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *)(3 * sizeof(float)));
+	glEnableVertexAttribArray(1);
 
 	// LOAD TRACK TEXTURE
 	// -------------------------
@@ -609,15 +636,17 @@ int main()
 		glBindVertexArray(VAO_Track);
 		glDrawArrays(GL_TRIANGLES, 0, 6);
 
+		// bg
+		model = glm::mat4(1.0f);
+		glUseProgram(shaderCar);
+		glUniformMatrix4fv(glGetUniformLocation(shaderCar, "model"), 1, GL_FALSE, glm::value_ptr(model));
+		glUniformMatrix4fv(glGetUniformLocation(shaderCar, "view"), 1, GL_FALSE, glm::value_ptr(view));
+		glUniformMatrix4fv(glGetUniformLocation(shaderCar, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+		glBindVertexArray(VAO_Bg);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
 
 		// Tree
 		render_tree(tree1, shaderCar, model, view, projection);
-
-		// TODOs
-		// - teto do carro
-		// - placa?
-		// posicao da camera
-		// - plano de fundo?
 
 		float radius = 3.0f; // Raio do círculo
 		float speed = 1.0f;	 // Velocidade de rotação
