@@ -423,7 +423,7 @@ int main()
 	unsigned int track_texture = load_texture("./images/track2.jpg");
 	unsigned int test_texture = load_texture("./images/crowd-1.jpg");
 	// unsigned int tree_texture = load_texture("./images/xmas-tree.png");
-	unsigned int sign_texture = load_texture("./images/stop.jpg");
+	unsigned int sign_texture = load_texture("./images/rotatoria.jpg");
 
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_BLEND);
