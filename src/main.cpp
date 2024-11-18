@@ -26,7 +26,7 @@ void resetCamera();
 int init_gl_context();
 unsigned int load_texture(const char* path);
 
-const char *vertexShaderTrack = "#version 330 core\n"
+const char *vertexShaderTexture = "#version 330 core\n"
 								"layout(location = 0) in vec3 position;"
 								"layout (location = 1) in vec2 aTexCoord;"
 								"out vec2 TexCoord;"
@@ -38,7 +38,7 @@ const char *vertexShaderTrack = "#version 330 core\n"
 								"   TexCoord = vec2(aTexCoord.x, aTexCoord.y);"
 								"}";
 
-const char *fragmentShaderTrack = "#version 330 core\n"
+const char *fragmentShaderTexture = "#version 330 core\n"
 								  "out vec4 color;"
 								  "in vec2 TexCoord;"
 								  "uniform sampler2D texture1;"
@@ -46,35 +46,23 @@ const char *fragmentShaderTrack = "#version 330 core\n"
 								  "   color = vec4(texture(texture1, TexCoord).rgb, 1.0);"
 								  "}";
 
-const char *vertexShaderCar2 = "#version 330 core\n"
-							   "layout(location = 0) in vec3 position;"
-							   "layout (location = 1) in vec2 aTexCoord;"
-							   "out vec2 TexCoord;"
-							   "uniform mat4 model;"
-							   "uniform mat4 view;"
-							   "uniform mat4 projection;"
-							   "void main() {"
-							   "   gl_Position = projection * view * model * vec4(position, 1.0f);"
-							   "   TexCoord = vec2(aTexCoord.x, aTexCoord.y);"
-							   "}";
-
-const char *vertexShaderCar = "#version 330 core\n"
+const char *vertexShaderColor = "#version 330 core\n"
 							  "layout(location = 0) in vec3 position;"
-							  "layout (location = 1) in vec3 aColor;"
+							  "layout (location = 1) in vec4 aColor;"
 							  "uniform mat4 model;"
 							  "uniform mat4 view;"
 							  "uniform mat4 projection;"
-							  "out vec3 cor;"
+							  "out vec4 cor;"
 							  "void main() {"
 							  "   gl_Position = projection * view * model * vec4(position, 1.0f);"
 							  "   cor = aColor;"
 							  "}";
 
-const char *fragmentShaderCar = "#version 330 core\n"
-								"in vec3 cor;"
+const char *fragmentShaderColor = "#version 330 core\n"
+								"in vec4 cor;"
 								"out vec4 color;"
 								"void main() {"
-								"   color = vec4(cor, 1.0);"
+								"   color = cor;"
 								"}";
 
 // settings
@@ -86,12 +74,12 @@ glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
 glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
 
 // cores
-glm::vec3 black = glm::vec3(0.0f, 0.0f, 0.0f);
-glm::vec3 pink = glm::vec3(0.867f, 0.667f, 0.933f);
-glm::vec3 green = glm::vec3(0.408f,0.722f,0.004f);
-glm::vec3 red = glm::vec3(1.0f, 0.0f, 0.0f);
-glm::vec3 white = glm::vec3(1.0f, 1.0f, 1.0f);
-glm::vec3 yellow = glm::vec3(1.0f, 0.5f, 0.0f);
+glm::vec4 black = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+glm::vec4 pink = glm::vec4(0.867f, 0.667f, 0.933f, 1.0f);
+glm::vec4 green = glm::vec4(0.408f,0.722f,0.004f, 1.0f);
+glm::vec4 red = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
+glm::vec4 white = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+glm::vec4 yellow = glm::vec4(1.0f, 0.5f, 0.0f, 1.0f);
 
 float sensitivity = 1.0f;
 float yaw = -90.0f;
@@ -132,7 +120,7 @@ std::vector<float> createPlaneWithTexture(float width, float height, glm::vec3 c
 	return vertices;
 }
 
-std::vector<float> createQuadVertices(float width, float height, float depth, glm::vec3 center, glm::vec3 color)
+std::vector<float> createQuadVertices(float width, float height, float depth, glm::vec3 center, glm::vec4 color)
 {
 	float halfWidth = width / 2.0f;
 	float halfHeight = height / 2.0f;
@@ -140,52 +128,52 @@ std::vector<float> createQuadVertices(float width, float height, float depth, gl
 
 	std::vector<float> vertices = {
 		// Front face
-		center.x - halfWidth, center.y - halfHeight, center.z + halfDepth, color.x, color.y, color.z,
-		center.x + halfWidth, center.y - halfHeight, center.z + halfDepth, color.x, color.y, color.z,
-		center.x + halfWidth, center.y + halfHeight, center.z + halfDepth, color.x, color.y, color.z,
-		center.x + halfWidth, center.y + halfHeight, center.z + halfDepth, color.x, color.y, color.z,
-		center.x - halfWidth, center.y + halfHeight, center.z + halfDepth, color.x, color.y, color.z,
-		center.x - halfWidth, center.y - halfHeight, center.z + halfDepth, color.x, color.y, color.z,
+		center.x - halfWidth, center.y - halfHeight, center.z + halfDepth, color.x, color.y, color.z, color.w,
+		center.x + halfWidth, center.y - halfHeight, center.z + halfDepth, color.x, color.y, color.z, color.w,
+		center.x + halfWidth, center.y + halfHeight, center.z + halfDepth, color.x, color.y, color.z, color.w,
+		center.x + halfWidth, center.y + halfHeight, center.z + halfDepth, color.x, color.y, color.z, color.w,
+		center.x - halfWidth, center.y + halfHeight, center.z + halfDepth, color.x, color.y, color.z, color.w,
+		center.x - halfWidth, center.y - halfHeight, center.z + halfDepth, color.x, color.y, color.z, color.w,
 
 		// Back face
-		center.x - halfWidth, center.y - halfHeight, center.z - halfDepth, color.x, color.y, color.z,
-		center.x + halfWidth, center.y - halfHeight, center.z - halfDepth, color.x, color.y, color.z,
-		center.x + halfWidth, center.y + halfHeight, center.z - halfDepth, color.x, color.y, color.z,
-		center.x + halfWidth, center.y + halfHeight, center.z - halfDepth, color.x, color.y, color.z,
-		center.x - halfWidth, center.y + halfHeight, center.z - halfDepth, color.x, color.y, color.z,
-		center.x - halfWidth, center.y - halfHeight, center.z - halfDepth, color.x, color.y, color.z,
+		center.x - halfWidth, center.y - halfHeight, center.z - halfDepth, color.x, color.y, color.z, color.w,
+		center.x + halfWidth, center.y - halfHeight, center.z - halfDepth, color.x, color.y, color.z, color.w,
+		center.x + halfWidth, center.y + halfHeight, center.z - halfDepth, color.x, color.y, color.z, color.w,
+		center.x + halfWidth, center.y + halfHeight, center.z - halfDepth, color.x, color.y, color.z, color.w,
+		center.x - halfWidth, center.y + halfHeight, center.z - halfDepth, color.x, color.y, color.z, color.w,
+		center.x - halfWidth, center.y - halfHeight, center.z - halfDepth, color.x, color.y, color.z, color.w,
 
 		// Left face
-		center.x - halfWidth, center.y + halfHeight, center.z + halfDepth, color.x, color.y, color.z,
-		center.x - halfWidth, center.y + halfHeight, center.z - halfDepth, color.x, color.y, color.z,
-		center.x - halfWidth, center.y - halfHeight, center.z - halfDepth, color.x, color.y, color.z,
-		center.x - halfWidth, center.y - halfHeight, center.z - halfDepth, color.x, color.y, color.z,
-		center.x - halfWidth, center.y - halfHeight, center.z + halfDepth, color.x, color.y, color.z,
-		center.x - halfWidth, center.y + halfHeight, center.z + halfDepth, color.x, color.y, color.z,
+		center.x - halfWidth, center.y + halfHeight, center.z + halfDepth, color.x, color.y, color.z, color.w,
+		center.x - halfWidth, center.y + halfHeight, center.z - halfDepth, color.x, color.y, color.z, color.w,
+		center.x - halfWidth, center.y - halfHeight, center.z - halfDepth, color.x, color.y, color.z, color.w,
+		center.x - halfWidth, center.y - halfHeight, center.z - halfDepth, color.x, color.y, color.z, color.w,
+		center.x - halfWidth, center.y - halfHeight, center.z + halfDepth, color.x, color.y, color.z, color.w,
+		center.x - halfWidth, center.y + halfHeight, center.z + halfDepth, color.x, color.y, color.z, color.w,
 
 		// Right face
-		center.x + halfWidth, center.y + halfHeight, center.z + halfDepth, color.x, color.y, color.z,
-		center.x + halfWidth, center.y + halfHeight, center.z - halfDepth, color.x, color.y, color.z,
-		center.x + halfWidth, center.y - halfHeight, center.z - halfDepth, color.x, color.y, color.z,
-		center.x + halfWidth, center.y - halfHeight, center.z - halfDepth, color.x, color.y, color.z,
-		center.x + halfWidth, center.y - halfHeight, center.z + halfDepth, color.x, color.y, color.z,
-		center.x + halfWidth, center.y + halfHeight, center.z + halfDepth, color.x, color.y, color.z,
+		center.x + halfWidth, center.y + halfHeight, center.z + halfDepth, color.x, color.y, color.z, color.w,
+		center.x + halfWidth, center.y + halfHeight, center.z - halfDepth, color.x, color.y, color.z, color.w,
+		center.x + halfWidth, center.y - halfHeight, center.z - halfDepth, color.x, color.y, color.z, color.w,
+		center.x + halfWidth, center.y - halfHeight, center.z - halfDepth, color.x, color.y, color.z, color.w,
+		center.x + halfWidth, center.y - halfHeight, center.z + halfDepth, color.x, color.y, color.z, color.w,
+		center.x + halfWidth, center.y + halfHeight, center.z + halfDepth, color.x, color.y, color.z, color.w,
 
 		// Top face
-		center.x - halfWidth, center.y + halfHeight, center.z - halfDepth, color.x, color.y, color.z,
-		center.x + halfWidth, center.y + halfHeight, center.z - halfDepth, color.x, color.y, color.z,
-		center.x + halfWidth, center.y + halfHeight, center.z + halfDepth, color.x, color.y, color.z,
-		center.x + halfWidth, center.y + halfHeight, center.z + halfDepth, color.x, color.y, color.z,
-		center.x - halfWidth, center.y + halfHeight, center.z + halfDepth, color.x, color.y, color.z,
-		center.x - halfWidth, center.y + halfHeight, center.z - halfDepth, color.x, color.y, color.z,
+		center.x - halfWidth, center.y + halfHeight, center.z - halfDepth, color.x, color.y, color.z, color.w,
+		center.x + halfWidth, center.y + halfHeight, center.z - halfDepth, color.x, color.y, color.z, color.w,
+		center.x + halfWidth, center.y + halfHeight, center.z + halfDepth, color.x, color.y, color.z, color.w,
+		center.x + halfWidth, center.y + halfHeight, center.z + halfDepth, color.x, color.y, color.z, color.w,
+		center.x - halfWidth, center.y + halfHeight, center.z + halfDepth, color.x, color.y, color.z, color.w,
+		center.x - halfWidth, center.y + halfHeight, center.z - halfDepth, color.x, color.y, color.z, color.w,
 
 		// Bottom face
-		center.x - halfWidth, center.y - halfHeight, center.z - halfDepth, color.x, color.y, color.z,
-		center.x + halfWidth, center.y - halfHeight, center.z - halfDepth, color.x, color.y, color.z,
-		center.x + halfWidth, center.y - halfHeight, center.z + halfDepth, color.x, color.y, color.z,
-		center.x + halfWidth, center.y - halfHeight, center.z + halfDepth, color.x, color.y, color.z,
-		center.x - halfWidth, center.y - halfHeight, center.z + halfDepth, color.x, color.y, color.z,
-		center.x - halfWidth, center.y - halfHeight, center.z - halfDepth, color.x, color.y, color.z,
+		center.x - halfWidth, center.y - halfHeight, center.z - halfDepth, color.x, color.y, color.z, color.w,
+		center.x + halfWidth, center.y - halfHeight, center.z - halfDepth, color.x, color.y, color.z, color.w,
+		center.x + halfWidth, center.y - halfHeight, center.z + halfDepth, color.x, color.y, color.z, color.w,
+		center.x + halfWidth, center.y - halfHeight, center.z + halfDepth, color.x, color.y, color.z, color.w,
+		center.x - halfWidth, center.y - halfHeight, center.z + halfDepth, color.x, color.y, color.z, color.w,
+		center.x - halfWidth, center.y - halfHeight, center.z - halfDepth, color.x, color.y, color.z, color.w,
 	};
 
 	return vertices;
@@ -208,58 +196,58 @@ std::vector<float> createCarVertices()
 												   pink);
 
 	std::vector<float> top = {
-		-0.3f, 0.0f, -0.5f, 0.0f,0.451f,1.0f,
-		0.3f, 0.0f, -0.5f,  0.0f,0.451f,1.0f,
-		0.3f, 0.3f, -0.5f,  0.0f,0.451f,1.0f,
-		0.3f, 0.3f, -0.5f,  0.0f,0.451f,1.0f,
-		-0.3f, 0.3f, -0.5f, 0.0f,0.451f,1.0f,
-		-0.3f, 0.0f, -0.5f, 0.0f,0.451f,1.0f,
-		-0.3f, 0.0f, 0.5f,  0.0f,0.451f,1.0f,
-		0.3f, 0.0f, 0.5f,   0.0f,0.451f,1.0f,
-		0.3f, 0.3f, 0.5f,   0.0f,0.451f,1.0f,
-		0.3f, 0.3f, 0.5f,   0.0f,0.451f,1.0f,
-		-0.3f, 0.3f, 0.5f,  0.0f,0.451f,1.0f,
-		-0.3f, 0.0f, 0.5f,  0.0f,0.451f,1.0f,
+		-0.3f, 0.0f, -0.5f, 0.0f,0.451f,1.0f,1.0f,
+		0.3f, 0.0f, -0.5f,  0.0f,0.451f,1.0f,1.0f,
+		0.3f, 0.3f, -0.5f,  0.0f,0.451f,1.0f,1.0f,
+		0.3f, 0.3f, -0.5f,  0.0f,0.451f,1.0f,1.0f,
+		-0.3f, 0.3f, -0.5f, 0.0f,0.451f,1.0f,1.0f,
+		-0.3f, 0.0f, -0.5f, 0.0f,0.451f,1.0f,1.0f,
+		-0.3f, 0.0f, 0.5f,  0.0f,0.451f,1.0f,1.0f,
+		0.3f, 0.0f, 0.5f,   0.0f,0.451f,1.0f,1.0f,
+		0.3f, 0.3f, 0.5f,   0.0f,0.451f,1.0f,1.0f,
+		0.3f, 0.3f, 0.5f,   0.0f,0.451f,1.0f,1.0f,
+		-0.3f, 0.3f, 0.5f,  0.0f,0.451f,1.0f,1.0f,
+		-0.3f, 0.0f, 0.5f,  0.0f,0.451f,1.0f,1.0f,
 
 		// top
-		-0.3f, 0.3f, 0.5f,  0.867f, 0.667f, 0.933f,
-		0.3f, 0.3f, 0.5f,   0.867f, 0.667f, 0.933f,
-		0.3f, 0.3f, -0.5f,  0.867f, 0.667f, 0.933f,
-		0.3f, 0.3f, -0.5f,  0.867f, 0.667f, 0.933f,
-		-0.3f, 0.3f, -0.5f, 0.867f, 0.667f, 0.933f,
-		-0.3f, 0.3f, 0.5f,  0.867f, 0.667f, 0.933f,
+		-0.3f, 0.3f, 0.5f,  0.867f, 0.667f, 0.933f,1.0f,
+		0.3f, 0.3f, 0.5f,   0.867f, 0.667f, 0.933f,1.0f,
+		0.3f, 0.3f, -0.5f,  0.867f, 0.667f, 0.933f,1.0f,
+		0.3f, 0.3f, -0.5f,  0.867f, 0.667f, 0.933f,1.0f,
+		-0.3f, 0.3f, -0.5f, 0.867f, 0.667f, 0.933f,1.0f,
+		-0.3f, 0.3f, 0.5f,  0.867f, 0.667f, 0.933f,1.0f,
 
 		// front
-		-0.5f, 0.0f, 0.5f, 0.0f,0.451f,1.0f,
-		0.5f, 0.0f, 0.5f,  0.0f,0.451f,1.0f,
-		0.3f, 0.3f, 0.5f,  0.0f,0.451f,1.0f,
-		0.3f, 0.3f, 0.5f,  0.0f,0.451f,1.0f,
-		-0.3f, 0.3f, 0.5f, 0.0f,0.451f,1.0f,
-		-0.5f, 0.0f, 0.5f, 0.0f,0.451f,1.0f,
+		-0.5f, 0.0f, 0.5f, 0.0f,0.451f,1.0f,1.0f,
+		0.5f, 0.0f, 0.5f,  0.0f,0.451f,1.0f,1.0f,
+		0.3f, 0.3f, 0.5f,  0.0f,0.451f,1.0f,1.0f,
+		0.3f, 0.3f, 0.5f,  0.0f,0.451f,1.0f,1.0f,
+		-0.3f, 0.3f, 0.5f, 0.0f,0.451f,1.0f,1.0f,
+		-0.5f, 0.0f, 0.5f, 0.0f,0.451f,1.0f,1.0f,
 
 		// back
-		-0.5f, 0.0f, -0.5f, 0.0f,0.451f,1.0f,
-		0.5f, 0.0f, -0.5f,  0.0f,0.451f,1.0f,
-		0.3f, 0.3f, -0.5f,  0.0f,0.451f,1.0f,
-		0.3f, 0.3f, -0.5f,  0.0f,0.451f,1.0f,
-		-0.3f, 0.3f, -0.5f, 0.0f,0.451f,1.0f,
-		-0.5f, 0.0f, -0.5f, 0.0f,0.451f,1.0f,
+		-0.5f, 0.0f, -0.5f, 0.0f,0.451f,1.0f,1.0f,
+		0.5f, 0.0f, -0.5f,  0.0f,0.451f,1.0f,1.0f,
+		0.3f, 0.3f, -0.5f,  0.0f,0.451f,1.0f,1.0f,
+		0.3f, 0.3f, -0.5f,  0.0f,0.451f,1.0f,1.0f,
+		-0.3f, 0.3f, -0.5f, 0.0f,0.451f,1.0f,1.0f,
+		-0.5f, 0.0f, -0.5f, 0.0f,0.451f,1.0f,1.0f,
 
 		// Left window
-		-0.3f, 0.0f, 0.5f,  0.0f,0.451f,1.0f,
-		-0.3f, 0.3f, 0.5f,  0.0f,0.451f,1.0f,
-		-0.3f, 0.3f, -0.5f, 0.0f,0.451f,1.0f,
-		-0.3f, 0.3f, -0.5f, 0.0f,0.451f,1.0f,
-		-0.3f, 0.0f, -0.5f, 0.0f,0.451f,1.0f,
-		-0.3f, 0.0f, 0.5f,  0.0f,0.451f,1.0f,
+		-0.3f, 0.0f, 0.5f,  0.0f,0.451f,1.0f,1.0f,
+		-0.3f, 0.3f, 0.5f,  0.0f,0.451f,1.0f,1.0f,
+		-0.3f, 0.3f, -0.5f, 0.0f,0.451f,1.0f,1.0f,
+		-0.3f, 0.3f, -0.5f, 0.0f,0.451f,1.0f,1.0f,
+		-0.3f, 0.0f, -0.5f, 0.0f,0.451f,1.0f,1.0f,
+		-0.3f, 0.0f, 0.5f,  0.0f,0.451f,1.0f,1.0f,
 
 		// Right window
-		0.3f, 0.0f, 0.5f,  0.0f,0.451f,1.0f,
-		0.3f, 0.3f, 0.5f,  0.0f,0.451f,1.0f,
-		0.3f, 0.3f, -0.5f, 0.0f,0.451f,1.0f,
-		0.3f, 0.3f, -0.5f, 0.0f,0.451f,1.0f,
-		0.3f, 0.0f, -0.5f, 0.0f,0.451f,1.0f,
-		0.3f, 0.0f, 0.5f,  0.0f,0.451f,1.0f};
+		0.3f, 0.0f, 0.5f,  0.0f,0.451f,1.0f,1.0f,
+		0.3f, 0.3f, 0.5f,  0.0f,0.451f,1.0f,1.0f,
+		0.3f, 0.3f, -0.5f, 0.0f,0.451f,1.0f,1.0f,
+		0.3f, 0.3f, -0.5f, 0.0f,0.451f,1.0f,1.0f,
+		0.3f, 0.0f, -0.5f, 0.0f,0.451f,1.0f,1.0f,
+		0.3f, 0.0f, 0.5f,  0.0f,0.451f,1.0f,1.0f};
 
 	std::vector<float> lights;
 
@@ -292,10 +280,26 @@ std::vector<float> createCarVertices()
 
 std::vector<float> createTreeVertices(glm::vec3 position)
 {
-	std::vector<float> trunk = createQuadVertices(0.5f, 1.0f, 0.1f,
-												   position,
-												   pink);
-	return trunk;
+	auto color = glm::vec4(1.0f, 0.0f, 0.0f, 0.5f);
+	return createPlaneWithTexture(1.0f, 1.8f, position);
+}
+
+std::vector<float> createSignBaseVertices(glm::vec3 position)
+{
+	float height = 1.0f;
+	float width = 0.05f;
+	auto base =  createQuadVertices(width, height, width, position, black);
+	return base;
+}
+
+std::vector<float> createSignVertices(glm::vec3 position)
+{
+	float height = 1.0f;
+
+	glm::vec3 signPos = position;
+	signPos.y += height - 0.25f;
+	auto sign = createPlaneWithTexture(0.5f, 0.5f, signPos);
+	return sign;
 }
 
 void render_tree(Object& tree, GLuint shader, glm::mat4 model, glm::mat4 view, glm::mat4 projection)
@@ -328,7 +332,7 @@ void render_object(Object& obj, int triangles, GLuint shader, glm::mat4 model, g
 
 void glBind_object(Object& obj)
 {
-	int components = obj.texture ? 5 : 6;
+	int components = obj.texture ? 5 : 7;
 	
 	glBindVertexArray(obj.vao);
 	glBindBuffer(GL_ARRAY_BUFFER, obj.vao);
@@ -340,16 +344,10 @@ void glBind_object(Object& obj)
 		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, components * sizeof(float), (void *)(3 * sizeof(float)));
 		glEnableVertexAttribArray(1);
 	} else {
-		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, components * sizeof(float), (void *)(3 * sizeof(float)));
+		glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, components * sizeof(float), (void *)(3 * sizeof(float)));
 		glEnableVertexAttribArray(1);
 	}
 }
-
-// TODOs
-/*
-	- adicionar textura na arvore do centro
-	- placa
-*/
 
 int main()
 {
@@ -357,7 +355,7 @@ int main()
 	resetCamera();
 
 	GLuint VBO_Track, VAO_Track, VBO_Car, VAO_Car, VBO_Tree1, VAO_Tree1;
-	GLuint VBO_Bg, VAO_Bg;
+	GLuint VBO_Bg, VAO_Bg, VBO_Sign, VAO_Sign, VBO_SignBase, VAO_SignBase;
 	glGenVertexArrays(1, &VAO_Track);
 	glGenBuffers(1, &VBO_Track);
 
@@ -370,26 +368,41 @@ int main()
 	glGenVertexArrays(1, &VAO_Bg);
 	glGenBuffers(1, &VBO_Bg);
 
-	Object tree1, car, background;
+	glGenVertexArrays(1, &VAO_Sign);
+	glGenBuffers(1, &VBO_Sign);
 
-	tree1.position = glm::vec3(0.0f, -0.20f, 0.0f);
-	tree1.vertices = createTreeVertices(tree1.position);
-	tree1.vao = VAO_Tree1;
-	tree1.texture = false;
+	glGenVertexArrays(1, &VAO_SignBase);
+	glGenBuffers(1, &VBO_SignBase);
+
+	Object tree1, car, background, sign, signBase;
+
+	// tree1.position = glm::vec3(0.0f, -0.20f, 0.0f);
+	// tree1.vertices = createTreeVertices(tree1.position);
+	// tree1.vao = VAO_Tree1;
+	// tree1.texture = true;
 
 	car.position = glm::vec3(0.0f);
 	car.vertices = createCarVertices();
 	car.vao = VAO_Car;
 	car.texture = false;
 
+	sign.position = glm::vec3(0.0f, -0.2f, 0.0f);
+	sign.vertices = createSignVertices(sign.position);
+	sign.vao = VAO_Sign;
+	sign.texture = true;
+
+	signBase.position = sign.position;
+	signBase.vertices = createSignBaseVertices(signBase.position);
+	signBase.vao = VAO_SignBase;
+	signBase.texture = false;
 
 	background.position = glm::vec3(0.0f, 4.0f, -7.0f);
 	background.vertices = createPlaneWithTexture(35.0f, 10.0f, background.position);
 	background.vao = VAO_Bg;
 	background.texture = true;
 
-	GLuint shaderTrack = compileShader(vertexShaderTrack, fragmentShaderTrack);
-	GLuint shaderCar = compileShader(vertexShaderCar, fragmentShaderCar);
+	GLuint shaderTexture = compileShader(vertexShaderTexture, fragmentShaderTexture);
+	GLuint shaderColor = compileShader(vertexShaderColor, fragmentShaderColor);
 
 	// TRACK
 	glBindVertexArray(VAO_Track);
@@ -401,14 +414,20 @@ int main()
 	glEnableVertexAttribArray(1);
 
 	glBind_object(car);
-	glBind_object(tree1);
+	// glBind_object(tree1);
 	glBind_object(background);
+	glBind_object(sign);
+	glBind_object(signBase);
 
 	// LOAD TRACK TEXTURE
 	unsigned int track_texture = load_texture("./images/track2.jpg");
 	unsigned int test_texture = load_texture("./images/crowd-1.jpg");
+	// unsigned int tree_texture = load_texture("./images/xmas-tree.png");
+	unsigned int sign_texture = load_texture("./images/stop.jpg");
 
 	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
 	while (!glfwWindowShouldClose(window))
 	{
@@ -430,10 +449,10 @@ int main()
 		glBindTexture(GL_TEXTURE_2D, track_texture);
 
 		model = glm::mat4(1.0f);
-		glUseProgram(shaderTrack);
-		glUniformMatrix4fv(glGetUniformLocation(shaderTrack, "model"), 1, GL_FALSE, glm::value_ptr(model));
-		glUniformMatrix4fv(glGetUniformLocation(shaderTrack, "view"), 1, GL_FALSE, glm::value_ptr(view));
-		glUniformMatrix4fv(glGetUniformLocation(shaderTrack, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+		glUseProgram(shaderTexture);
+		glUniformMatrix4fv(glGetUniformLocation(shaderTexture, "model"), 1, GL_FALSE, glm::value_ptr(model));
+		glUniformMatrix4fv(glGetUniformLocation(shaderTexture, "view"), 1, GL_FALSE, glm::value_ptr(view));
+		glUniformMatrix4fv(glGetUniformLocation(shaderTexture, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
 		glBindVertexArray(VAO_Track);
 		glDrawArrays(GL_TRIANGLES, 0, 6);
 
@@ -441,10 +460,19 @@ int main()
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, test_texture);
 		model = glm::mat4(1.0f);
-		render_object(background, 6, shaderTrack, model, view, projection);
+		render_object(background, 6, shaderTexture, model, view, projection);
+
+		// sign
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, sign_texture);
+		render_object(sign, 6, shaderTexture, model, view, projection);
+
+		render_object(signBase, 1024, shaderColor, model, view, projection);
 
 		// tree
-		render_tree(tree1, shaderCar, model, view, projection);
+		// glActiveTexture(GL_TEXTURE0);
+		// glBindTexture(GL_TEXTURE_2D, tree_texture);
+		//render_tree(tree1, shaderTexture, model, view, projection);
 
 		float radius = 3.0f; // Raio do círculo
 		float speed = 1.0f;	 // Velocidade de rotação
@@ -457,7 +485,7 @@ int main()
 
 		model = glm::translate(model, glm::vec3(x, 0.0f, z));			 // Translação para a posição circular
 		model = glm::rotate(model, angle, glm::vec3(0.0f, speed, 0.0f)); // Rotação para apontar para onde está indo
-		render_object(car, 36*1000, shaderCar, model, view, projection);
+		render_object(car, 36*1000, shaderColor, model, view, projection);
 
 		// Trocar os buffers da janela
 		glfwSwapBuffers(window);
@@ -472,8 +500,8 @@ int main()
 	glDeleteBuffers(1, &VBO_Bg);
 	glDeleteVertexArrays(1, &VAO_Tree1);
 	glDeleteBuffers(1, &VBO_Tree1);
-	glDeleteProgram(shaderTrack);
-	glDeleteProgram(shaderCar);
+	glDeleteProgram(shaderTexture);
+	glDeleteProgram(shaderColor);
 
 	glfwTerminate();
 	return 0;
@@ -677,6 +705,7 @@ unsigned int load_texture(const char* path)
 		glGenerateMipmap(GL_TEXTURE_2D);
 	} else {
 		std::cout << "Failed to load texture aaaaa" << std::endl;
+		exit(1);
 	}
 	stbi_image_free(data);
 
