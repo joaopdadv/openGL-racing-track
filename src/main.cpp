@@ -24,6 +24,7 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height);
 void processInput(GLFWwindow *window);
 void resetCamera();
 int init_gl_context();
+void processCarInput(GLFWwindow *window, glm::vec3 &carPosition, float &carRotationAngle, float deltaTime);
 unsigned int load_texture(const char* path);
 
 const char *vertexShaderTexture = "#version 330 core\n"
@@ -354,6 +355,10 @@ int main()
 	if (init_gl_context() < 0) return 1;
 	resetCamera();
 
+	float lastFrame = 0.0f;
+	glm::vec3 carPosition(0.0f, 0.0f, 0.0f);
+	float carRotationAngle = 0.0f;
+
 	GLuint VBO_Track, VAO_Track, VBO_Car, VAO_Car, VBO_Tree1, VAO_Tree1;
 	GLuint VBO_Bg, VAO_Bg, VBO_Sign, VAO_Sign, VBO_SignBase, VAO_SignBase;
 	glGenVertexArrays(1, &VAO_Track);
@@ -432,7 +437,7 @@ int main()
 	while (!glfwWindowShouldClose(window))
 	{
 		// Atender os eventos
-		processInput(window);
+		// processInput(window);
 
 		// Limpar a tela
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -474,17 +479,29 @@ int main()
 		// glBindTexture(GL_TEXTURE_2D, tree_texture);
 		//render_tree(tree1, shaderTexture, model, view, projection);
 
-		float radius = 3.0f; // Raio do círculo
-		float speed = 1.0f;	 // Velocidade de rotação
+		// float radius = 3.0f; // Raio do círculo
+		// float speed = 1.0f;	 // Velocidade de rotação
 
-		float x = radius * cos(speed * glfwGetTime());
-		float z = radius * sin(speed * glfwGetTime());
+		// float x = radius * cos(speed * glfwGetTime());
+		// float z = radius * sin(speed * glfwGetTime());
 
-		// Calcula o angulo da rotação com base na tangente do círculo
-		float angle = atan2(-z, x);
+		// // Calcula o angulo da rotação com base na tangente do círculo
+		// float angle = atan2(-z, x);
 
-		model = glm::translate(model, glm::vec3(x, 0.0f, z));			 // Translação para a posição circular
-		model = glm::rotate(model, angle, glm::vec3(0.0f, speed, 0.0f)); // Rotação para apontar para onde está indo
+		// model = glm::translate(model, glm::vec3(x, 0.0f, z));			 // Translação para a posição circular
+		// model = glm::rotate(model, angle, glm::vec3(0.0f, speed, 0.0f)); // Rotação para apontar para onde está indo
+
+
+		float currentFrame = glfwGetTime();
+		float deltaTime = currentFrame - lastFrame; // Calcula o tempo decorrido entre os frames
+		lastFrame = currentFrame;
+		// Atualiza a posição e rotação do carro
+		processCarInput(window, carPosition, carRotationAngle, deltaTime);
+
+		// Cria a matriz de modelo do carro
+		// glm::mat4 model = glm::mat4(1.0f);
+		model = glm::translate(model, carPosition); // Translação para a posição do carro
+		model = glm::rotate(model, glm::radians(carRotationAngle), glm::vec3(0.0f, 1.0f, 0.0f)); // Rotação do carro
 		render_object(car, 36*1000, shaderColor, model, view, projection);
 
 		// Trocar os buffers da janela
@@ -506,6 +523,30 @@ int main()
 	glfwTerminate();
 	return 0;
 }
+
+void processCarInput(GLFWwindow *window, glm::vec3 &carPosition, float &carRotationAngle, float deltaTime)
+{
+    const float carSpeed = 2.0f;        // Velocidade de translação do carro
+    const float rotationSpeed = 90.0f; // Velocidade de rotação do carro (em graus por segundo)
+
+    // Calcular o vetor "forward" baseado no ângulo de rotação
+    glm::vec3 forward = glm::vec3(sin(glm::radians(carRotationAngle)), 0.0f, cos(glm::radians(carRotationAngle)));
+
+    // Rotação do carro
+    if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
+        carRotationAngle += rotationSpeed * deltaTime; // Rotaciona para a esquerda
+    if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
+        carRotationAngle -= rotationSpeed * deltaTime; // Rotaciona para a direita
+
+    // Movimento do carro em relação à direção atual
+    if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
+        carPosition += forward * carSpeed * deltaTime; // Move para frente
+    if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
+        carPosition -= forward * carSpeed * deltaTime; // Move para trás
+}
+
+
+
 
 void framebuffer_size_callback(GLFWwindow *window, int width, int height)
 {
@@ -599,43 +640,43 @@ void resetCamera()
 	zoom = 45.0f;
 }
 
-void processInput(GLFWwindow *window)
-{
-	const float cameraSpeed = 0.05f; // adjust accordingly
+// void processInput(GLFWwindow *window)
+// {
+// 	const float cameraSpeed = 0.05f; // adjust accordingly
 
-	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-		glfwSetWindowShouldClose(window, true);
+// 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+// 		glfwSetWindowShouldClose(window, true);
 
-	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-		cameraPos += cameraSpeed * cameraFront;
-	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-		cameraPos -= cameraSpeed * cameraFront;
-	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-		cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
-	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-		cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
-	if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
-		cameraPos += glm::vec3(0.0f, 1.0f, 0.0f) * cameraSpeed;
-	if (glfwGetKey(window, GLFW_KEY_Z) == GLFW_PRESS)
-		cameraPos += glm::vec3(0.0f, -1.0f, 0.0f) * cameraSpeed;
+// 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+// 		cameraPos += cameraSpeed * cameraFront;
+// 	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+// 		cameraPos -= cameraSpeed * cameraFront;
+// 	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+// 		cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+// 	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+// 		cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+// 	if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
+// 		cameraPos += glm::vec3(0.0f, 1.0f, 0.0f) * cameraSpeed;
+// 	if (glfwGetKey(window, GLFW_KEY_Z) == GLFW_PRESS)
+// 		cameraPos += glm::vec3(0.0f, -1.0f, 0.0f) * cameraSpeed;
 
-	if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
-		viraCamera(0.0f, 1.0f);
-	if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
-		viraCamera(0.0f, -1.0f);
-	if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
-		viraCamera(-1.0f, 0.0f);
-	if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
-		viraCamera(1.0f, 0.0f);
+// 	if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
+// 		viraCamera(0.0f, 1.0f);
+// 	if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
+// 		viraCamera(0.0f, -1.0f);
+// 	if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
+// 		viraCamera(-1.0f, 0.0f);
+// 	if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
+// 		viraCamera(1.0f, 0.0f);
 
-	if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
-		zoomControl(1.0f);
-	if (glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS)
-		zoomControl(-1.0f);
+// 	if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
+// 		zoomControl(1.0f);
+// 	if (glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS)
+// 		zoomControl(-1.0f);
 
-	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
-		resetCamera();
-}
+// 	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
+// 		resetCamera();
+// }
 
 int init_gl_context()
 {
