@@ -356,8 +356,9 @@ int main()
 	if (init_gl_context() < 0) return 1;
 	resetCamera();
 
+
 	float lastFrame = 0.0f;
-	glm::vec3 carPosition(3.0f, 0.0f, 1.0f);
+	glm::vec3 carPosition(2.7f, 0.0f, 1.0f);
 	float carRotationAngle = 0.0f;
 
 	GLuint VBO_Track, VAO_Track, VBO_Car, VAO_Car, VBO_Tree1, VAO_Tree1;
@@ -484,6 +485,8 @@ int main()
 
 		// Verifica se está dentro do raio
 		if (!isCarWithinRadius(carPosition, 1.8f, 4.0f)) {
+			carPosition = glm::vec3(2.7f, 0.0f, 1.0f);
+			carRotationAngle = 0.0f;
 			std::cout << "O carro saiu da área permitida!" << std::endl;
 		} else {
 			std::cout << "O carro está dentro da área permitida." << std::endl;
