@@ -25,6 +25,7 @@ void processInput(GLFWwindow *window);
 void resetCamera();
 int init_gl_context();
 void processCarInput(GLFWwindow *window, glm::vec3 &carPosition, float &carRotationAngle, float deltaTime);
+bool isCarWithinRadius(const glm::vec3 &carPosition, float minRadius, float maxRadius);
 unsigned int load_texture(const char* path);
 
 const char *vertexShaderTexture = "#version 330 core\n"
@@ -356,7 +357,7 @@ int main()
 	resetCamera();
 
 	float lastFrame = 0.0f;
-	glm::vec3 carPosition(0.0f, 0.0f, 0.0f);
+	glm::vec3 carPosition(3.0f, 0.0f, 1.0f);
 	float carRotationAngle = 0.0f;
 
 	GLuint VBO_Track, VAO_Track, VBO_Car, VAO_Car, VBO_Tree1, VAO_Tree1;
@@ -474,29 +475,19 @@ int main()
 
 		render_object(signBase, 1024, shaderColor, model, view, projection);
 
-		// tree
-		// glActiveTexture(GL_TEXTURE0);
-		// glBindTexture(GL_TEXTURE_2D, tree_texture);
-		//render_tree(tree1, shaderTexture, model, view, projection);
-
-		// float radius = 3.0f; // Raio do círculo
-		// float speed = 1.0f;	 // Velocidade de rotação
-
-		// float x = radius * cos(speed * glfwGetTime());
-		// float z = radius * sin(speed * glfwGetTime());
-
-		// // Calcula o angulo da rotação com base na tangente do círculo
-		// float angle = atan2(-z, x);
-
-		// model = glm::translate(model, glm::vec3(x, 0.0f, z));			 // Translação para a posição circular
-		// model = glm::rotate(model, angle, glm::vec3(0.0f, speed, 0.0f)); // Rotação para apontar para onde está indo
-
 
 		float currentFrame = glfwGetTime();
 		float deltaTime = currentFrame - lastFrame; // Calcula o tempo decorrido entre os frames
 		lastFrame = currentFrame;
 		// Atualiza a posição e rotação do carro
 		processCarInput(window, carPosition, carRotationAngle, deltaTime);
+
+		// Verifica se está dentro do raio
+		if (!isCarWithinRadius(carPosition, 1.8f, 4.0f)) {
+			std::cout << "O carro saiu da área permitida!" << std::endl;
+		} else {
+			std::cout << "O carro está dentro da área permitida." << std::endl;
+		}
 
 		// Cria a matriz de modelo do carro
 		// glm::mat4 model = glm::mat4(1.0f);
@@ -545,8 +536,10 @@ void processCarInput(GLFWwindow *window, glm::vec3 &carPosition, float &carRotat
         carPosition -= forward * carSpeed * deltaTime; // Move para trás
 }
 
-
-
+bool isCarWithinRadius(const glm::vec3 &carPosition, float minRadius, float maxRadius) {
+    float distance = glm::length(carPosition);
+    return distance <= maxRadius && distance >= minRadius;
+}
 
 void framebuffer_size_callback(GLFWwindow *window, int width, int height)
 {
