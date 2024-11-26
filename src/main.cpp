@@ -379,7 +379,6 @@ int main()
 	
 	resetCamera();
 
-
 	float lastFrame = 0.0f;
 	glm::vec3 carPosition(2.7f, 0.0f, 1.0f);
 	float carRotationAngle = 0.0f;
@@ -783,7 +782,7 @@ int init_sound_engine()
 		printf("Erro ao inicializar a engine de SOM!!\n");
 		return -1;
 	}
-	const char* musicFile = "sounds/MF-W-90.XM";
+	const char* musicFile = "sounds/topgear-soundtrack1.ogg";
 	ISound* music = soundEngine->play2D(musicFile,
 		true, false, true, ESM_AUTO_DETECT, true);
 

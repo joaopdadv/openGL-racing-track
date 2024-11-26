@@ -9,5 +9,9 @@ mkdir -p build/Debug
 #./build/Debug/outDebug
 
 # linux
-#g++ -o main src/main.cpp src/Shader.cpp -lglfw -lGL -lGLEW -lm -I"./include/" -I"./include/irrKlang" ./irrKlang-64bit-1.6.0/bin/linux-gcc-64/libIrrKlang.so -pthread
-#./main
+g++ -o main src/main.cpp src/Shader.cpp \
+    -lglfw -lGL -lGLEW -lm -pthread \
+    -I"./include/" -I"./include/irrKlang" \
+    ./lib/bin/linux-gcc-64/libIrrKlang.so
+
+./main
