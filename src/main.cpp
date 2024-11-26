@@ -17,6 +17,11 @@
 #include <stdio.h>
 #include <vector>
 
+#ifdef __linux__
+#include <irrKlang.h>
+using namespace irrklang;
+#endif
+
 GLuint compileShader(const char *vertexSource, const char *fragmentSource);
 void checkShaderCompileStatus(GLuint shader);
 void checkProgramLinkStatus(GLuint program);
@@ -27,6 +32,7 @@ int init_gl_context();
 void processCarInput(GLFWwindow *window, glm::vec3 &carPosition, float &carRotationAngle, float deltaTime);
 bool isCarWithinRadius(const glm::vec3 &carPosition, float minRadius, float maxRadius);
 unsigned int load_texture(const char* path);
+int init_sound_engine();
 
 const char *vertexShaderTexture = "#version 330 core\n"
 								"layout(location = 0) in vec3 position;"
@@ -89,6 +95,7 @@ float pitch = 0.0f;
 float zoom = 45.0f;
 
 GLFWwindow* window;
+ISoundEngine* soundEngine;
 
 typedef struct {
 	glm::vec3 position;
@@ -351,9 +358,25 @@ void glBind_object(Object& obj)
 	}
 }
 
+// TODO effect do bonk ao sair da pista
+// TODO trilha sonora de fundo do top gear
+// TODO luz e reflexo
+/**
+ * x, y, z, r, g, b, xn, yn, zn, u, v
+ * 
+ * vetores normais devem ser calculados (xn,yn,zn) a partir de x, y e z
+ * auto v1 = glm::cross(vec3(x,y,z), vec3(x2,y2,z2));
+ * compara-se a linha atual (x,y,z) com a linha seguinte (x2,y2,z2)
+ * auto vetorNormal = glm::normalize(v1);
+ * 11 componentes, fazer com que todo struct Object tenha essas componentes
+ * para posicionar a luz tem exemplo nos slides de uma struct Light no shader
+*/
+
 int main()
 {
 	if (init_gl_context() < 0) return 1;
+	if (init_sound_engine() < 0) return 1;
+	
 	resetCamera();
 
 
@@ -487,9 +510,9 @@ int main()
 		if (!isCarWithinRadius(carPosition, 1.8f, 4.0f)) {
 			carPosition = glm::vec3(2.7f, 0.0f, 1.0f);
 			carRotationAngle = 0.0f;
-			std::cout << "O carro saiu da área permitida!" << std::endl;
+			// std::cout << "O carro saiu da área permitida!" << std::endl;
 		} else {
-			std::cout << "O carro está dentro da área permitida." << std::endl;
+			// std::cout << "O carro está dentro da área permitida." << std::endl;
 		}
 
 		// Cria a matriz de modelo do carro
@@ -747,4 +770,23 @@ unsigned int load_texture(const char* path)
 	stbi_image_free(data);
 
 	return texture1;
+}
+
+int init_sound_engine()
+{
+#ifdef __APPLE__
+	return 1; // sem som no mac :/
+#endif
+
+	soundEngine = createIrrKlangDevice();
+	if (!soundEngine) {
+		printf("Erro ao inicializar a engine de SOM!!\n");
+		return -1;
+	}
+	const char* musicFile = "sounds/MF-W-90.XM";
+	ISound* music = soundEngine->play2D(musicFile,
+		true, false, true, ESM_AUTO_DETECT, true);
+
+	if (!musicFile) return -1;
+	return 1;
 }
