@@ -33,6 +33,7 @@ void processCarInput(GLFWwindow *window, glm::vec3 &carPosition, float &carRotat
 bool isCarWithinRadius(const glm::vec3 &carPosition, float minRadius, float maxRadius);
 unsigned int load_texture(const char* path);
 int init_sound_engine();
+void play_bonk();
 
 const char *vertexShaderTexture = "#version 330 core\n"
 								"layout(location = 0) in vec3 position;"
@@ -358,9 +359,9 @@ void glBind_object(Object& obj)
 	}
 }
 
-// TODO effect do bonk ao sair da pista
-// TODO trilha sonora de fundo do top gear
 // TODO luz e reflexo
+// TODO diminuir volume da musica de fundo
+// TODO editar sound do bonk para ser mais instantaneo
 /**
  * x, y, z, r, g, b, xn, yn, zn, u, v
  * 
@@ -507,6 +508,7 @@ int main()
 
 		// Verifica se está dentro do raio
 		if (!isCarWithinRadius(carPosition, 1.8f, 4.0f)) {
+			play_bonk(); // TODO editar o audio para o bonk tocar instantaneamente
 			carPosition = glm::vec3(2.7f, 0.0f, 1.0f);
 			carRotationAngle = 0.0f;
 			// std::cout << "O carro saiu da área permitida!" << std::endl;
@@ -788,4 +790,12 @@ int init_sound_engine()
 
 	if (!musicFile) return -1;
 	return 1;
+}
+
+void play_bonk()
+{
+#ifdef __APPLE__
+	return 1; // sem som no mac :/
+#endif
+	soundEngine->play2D("sounds/bonk.ogg");
 }
