@@ -17,6 +17,8 @@
 #include <stdio.h>
 #include <vector>
 
+#include <shader.h>
+
 #ifdef __linux__
 #include <irrKlang.h>
 using namespace irrklang;
@@ -34,6 +36,74 @@ bool isCarWithinRadius(const glm::vec3 &carPosition, float minRadius, float maxR
 unsigned int load_texture(const char* path);
 int init_sound_engine();
 void play_bonk();
+
+const char *vertexShaderTest = "#version 330 core\n"
+							  "layout(location = 0) in vec3 aPos;"
+							  "layout (location = 1) in vec3 aColor;"
+							  "layout (location = 2) in vec3 aNormal;"
+							  "layout (location = 3) in vec3 aTextCoord;"
+							  "uniform mat4 model;"
+							  "uniform mat4 view;"
+							  "uniform mat4 projection;"
+							  "out vec3 Color;"
+							  "out vec3 FragPos;"
+							  "out vec3 Normal;"
+							  "out vec2 TextCoord;"
+							  "void main() {"
+							  "   FragPos = vec3(model * vec4(aPos, 1.0));"
+							  "   Normal = mat3(transpose(inverse(model))) * aNormal;"
+							  "   gl_Position = projection * view * model * vec4(FragPos, 1.0f);"
+							  "   Color = aColor;"
+							  "   TextCoord = vec2(aTextCoord.x, aTextCoord.y);"
+							  "}";
+
+const char *fragmentShaderTest = "#version 330 core\n"
+							  "in vec3 Color;"
+							  "in vec3 FragPos;"
+							  "in vec3 Normal;"
+							  "in vec2 TextCoord;"
+								"uniform sampler2D texture1;"
+
+								"out vec4 FragColor;"
+
+								"struct Material {"
+								"	vec3 ambient;"
+								"	vec3 diffuse;"
+								"	vec3 specular;"    
+								"	float shininess;"
+								"};" 
+
+								"struct Light {"
+								"	vec3 position;"
+								"	vec3 ambient;"
+								"	vec3 diffuse;"
+								"	vec3 specular;"
+								"};"
+
+								"uniform vec3 viewPos;"
+								"uniform Material material;"
+								"uniform Light light;"
+
+								"void main() {"
+									"/* ambient */"
+									"vec3 ambient = light.ambient * material.ambient;"
+
+									"/* diffuse */" 
+									"vec3 norm = normalize(Normal);"
+									"vec3 lightDir = normalize(light.position - FragPos);"
+									"float diff = max(dot(norm, lightDir), 0.0);"
+									"vec3 diffuse = light.diffuse * (diff * material.diffuse);"
+
+									"/* specular */"
+									"vec3 viewDir = normalize(viewPos - FragPos);"
+									"vec3 reflectDir = reflect(-lightDir, norm);"
+									"float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);"
+									"vec3 specular = light.specular * (spec * material.specular);"
+
+									"vec3 result = ambient + diffuse + specular;"
+								  "FragColor = vec4(texture(texture1, TextCoord).rgb, 1.0);"
+									// "FragColor = vec4(result, 1.0);" // TODO ver como aplicar textura!
+								"}";
 
 const char *vertexShaderTexture = "#version 330 core\n"
 								"layout(location = 0) in vec3 position;"
@@ -98,6 +168,8 @@ float zoom = 45.0f;
 GLFWwindow* window;
 ISoundEngine* soundEngine;
 
+const int COMPONENTS = 11; // x, y, z, r, g, b, xn, yn, zn, u, v
+
 typedef struct {
 	glm::vec3 position;
 	std::vector<float> vertices;
@@ -106,12 +178,14 @@ typedef struct {
 } Object;
 
 float groundVertices[] = {
-	-5.0f, -0.6f, 5.0f, 0.0f, 0.0f,
-	5.0f, -0.6f, -5.0f, 1.0f, 1.0f,
-	5.0f, -0.6f, 5.0f, 1.0f, 0.0f,
-	-5.0f, -0.6f, 5.0f, 0.0f, 0.0f,
-	-5.0f, -0.6f, -5.0f, 0.0f, 1.0f,
-	5.0f, -0.6f, -5.0f, 1.0f, 1.0f};
+// x       y      z     r     g     b     xn    yn    zn    u     v
+	-5.0f,  -0.6f,  5.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+	 5.0f,  -0.6f, -5.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f,
+	 5.0f,  -0.6f,  5.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f,
+	-5.0f,  -0.6f,  5.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+	-5.0f,  -0.6f, -5.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f,
+	 5.0f,  -0.6f, -5.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f};
+
 
 std::vector<float> createPlaneWithTexture(float width, float height, glm::vec3 center)
 {
@@ -373,6 +447,9 @@ void glBind_object(Object& obj)
  * para posicionar a luz tem exemplo nos slides de uma struct Light no shader
 */
 
+// lighting
+glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
+
 int main()
 {
 	if (init_gl_context() < 0) return 1;
@@ -406,11 +483,6 @@ int main()
 
 	Object tree1, car, background, sign, signBase;
 
-	// tree1.position = glm::vec3(0.0f, -0.20f, 0.0f);
-	// tree1.vertices = createTreeVertices(tree1.position);
-	// tree1.vao = VAO_Tree1;
-	// tree1.texture = true;
-
 	car.position = glm::vec3(0.0f);
 	car.vertices = createCarVertices();
 	car.vao = VAO_Car;
@@ -433,18 +505,27 @@ int main()
 
 	GLuint shaderTexture = compileShader(vertexShaderTexture, fragmentShaderTexture);
 	GLuint shaderColor = compileShader(vertexShaderColor, fragmentShaderColor);
+	GLuint shaderTest = compileShader(vertexShaderTest, fragmentShaderTest);
+	Shader lightingShader("./shaders/test.vs", "./shaders/test.fs");
 
 	// TRACK
 	glBindVertexArray(VAO_Track);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO_Track);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(groundVertices), groundVertices, GL_STATIC_DRAW);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)0);
+	// position
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, COMPONENTS * sizeof(float), (void *)0);
 	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)(3 * sizeof(float)));
+	// cor
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, COMPONENTS * sizeof(float), (void *)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
+	// normais
+	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, COMPONENTS * sizeof(float), (void *)(6 * sizeof(float)));
+	glEnableVertexAttribArray(2);
+	// texture
+	glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, COMPONENTS * sizeof(float), (void *)(9 * sizeof(float)));
+	glEnableVertexAttribArray(3);
 
 	glBind_object(car);
-	// glBind_object(tree1);
 	glBind_object(background);
 	glBind_object(sign);
 	glBind_object(signBase);
@@ -479,10 +560,28 @@ int main()
 		glBindTexture(GL_TEXTURE_2D, track_texture);
 
 		model = glm::mat4(1.0f);
-		glUseProgram(shaderTexture);
-		glUniformMatrix4fv(glGetUniformLocation(shaderTexture, "model"), 1, GL_FALSE, glm::value_ptr(model));
-		glUniformMatrix4fv(glGetUniformLocation(shaderTexture, "view"), 1, GL_FALSE, glm::value_ptr(view));
-		glUniformMatrix4fv(glGetUniformLocation(shaderTexture, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+		lightingShader.use();
+		lightingShader.setVec3("light.position", lightPos);
+		lightingShader.setVec3("viewPos", cameraPos);
+
+		glm::vec3 lightColor = glm::vec3(1.0f, 1.0f, 1.0f);
+		glm::vec3 diffuseColor = lightColor   * glm::vec3(0.5f); // decrease the influence
+		glm::vec3 ambientColor = diffuseColor * glm::vec3(0.2f); // low influence
+
+		lightingShader.setVec3("light.ambient", ambientColor);
+		lightingShader.setVec3("light.diffuse", diffuseColor);
+		lightingShader.setVec3("light.specular", 1.0f, 1.0f, 1.0f);
+
+		// material properties
+		lightingShader.setVec3("material.ambient", 1.0f, 0.5f, 0.31f);
+		lightingShader.setVec3("material.diffuse", 1.0f, 0.5f, 0.31f);
+		lightingShader.setVec3("material.specular", 0.5f, 0.5f, 0.5f); // specular lighting doesn't have full effect on this object's material
+		lightingShader.setFloat("material.shininess", 32.0f);
+
+		lightingShader.setMat4("model", model);
+		lightingShader.setMat4("view", view);
+		lightingShader.setMat4("projection", projection);
+		
 		glBindVertexArray(VAO_Track);
 		glDrawArrays(GL_TRIANGLES, 0, 6);
 
