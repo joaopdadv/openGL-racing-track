@@ -18,6 +18,7 @@
 #include <vector>
 
 #include <shader.h>
+#include "camera.h"
 
 #ifdef __linux__
 #include <irrKlang.h>
@@ -148,6 +149,9 @@ const char *fragmentShaderColor = "#version 330 core\n"
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
 
+
+Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
+
 glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
 glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
 glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
@@ -167,6 +171,8 @@ float zoom = 45.0f;
 
 GLFWwindow* window;
 ISoundEngine* soundEngine;
+const char* musicFile = "sounds/topgear-soundtrack1.ogg";
+const char* bonkFile = "sounds/test1.wav";
 
 const int COMPONENTS = 11; // x, y, z, r, g, b, xn, yn, zn, u, v
 
@@ -185,7 +191,6 @@ float groundVertices[] = {
 	-5.0f,  -0.6f,  5.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
 	-5.0f,  -0.6f, -5.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f,
 	 5.0f,  -0.6f, -5.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f};
-
 
 std::vector<float> createPlaneWithTexture(float width, float height, glm::vec3 center)
 {
@@ -386,24 +391,6 @@ std::vector<float> createSignVertices(glm::vec3 position)
 	return sign;
 }
 
-void render_tree(Object& tree, GLuint shader, glm::mat4 model, glm::mat4 view, glm::mat4 projection)
-{
-	model = glm::mat4(1.0f);
-	glUseProgram(shader);
-	glUniformMatrix4fv(glGetUniformLocation(shader, "model"), 1, GL_FALSE, glm::value_ptr(model));
-	glUniformMatrix4fv(glGetUniformLocation(shader, "view"), 1, GL_FALSE, glm::value_ptr(view));
-	glUniformMatrix4fv(glGetUniformLocation(shader, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
-	glBindVertexArray(tree.vao);
-	glDrawArrays(GL_TRIANGLES, 0, 6);
-
-	model = glm::rotate(model, glm::radians(90.0f), tree.position);
-	glUniformMatrix4fv(glGetUniformLocation(shader, "model"), 1, GL_FALSE, glm::value_ptr(model));
-	glUniformMatrix4fv(glGetUniformLocation(shader, "view"), 1, GL_FALSE, glm::value_ptr(view));
-	glUniformMatrix4fv(glGetUniformLocation(shader, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
-	glBindVertexArray(tree.vao);
-	glDrawArrays(GL_TRIANGLES, 0, 6);
-}
-
 void render_object(Object& obj, int triangles, GLuint shader, glm::mat4 model, glm::mat4 view, glm::mat4 projection)
 {
 	glUseProgram(shader);
@@ -450,6 +437,50 @@ void glBind_object(Object& obj)
 // lighting
 glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
 
+float lightVertices[] = {
+	-0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+		0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+		0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+		0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+	-0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+	-0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+
+	-0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
+		0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
+		0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
+		0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
+	-0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
+	-0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
+
+	-0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
+	-0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
+	-0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
+	-0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
+	-0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
+	-0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
+
+		0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
+		0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
+		0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
+		0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
+		0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
+		0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
+
+	-0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
+		0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
+		0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
+		0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
+	-0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
+	-0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
+
+	-0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
+		0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
+		0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
+		0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
+	-0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
+	-0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f
+	};
+
 int main()
 {
 	if (init_gl_context() < 0) return 1;
@@ -463,6 +494,7 @@ int main()
 
 	GLuint VBO_Track, VAO_Track, VBO_Car, VAO_Car, VBO_Tree1, VAO_Tree1;
 	GLuint VBO_Bg, VAO_Bg, VBO_Sign, VAO_Sign, VBO_SignBase, VAO_SignBase;
+
 	glGenVertexArrays(1, &VAO_Track);
 	glGenBuffers(1, &VBO_Track);
 
@@ -480,6 +512,14 @@ int main()
 
 	glGenVertexArrays(1, &VAO_SignBase);
 	glGenBuffers(1, &VBO_SignBase);
+
+	GLuint VBO_LightSource, VAO_LightSource;
+	glGenVertexArrays(1, &VAO_LightSource);
+	glGenBuffers(1, &VBO_LightSource);
+
+	GLuint cubeVBO, cubeVAO;
+	glGenVertexArrays(1, &cubeVAO);
+	glGenBuffers(1, &cubeVBO);
 
 	Object tree1, car, background, sign, signBase;
 
@@ -505,25 +545,43 @@ int main()
 
 	GLuint shaderTexture = compileShader(vertexShaderTexture, fragmentShaderTexture);
 	GLuint shaderColor = compileShader(vertexShaderColor, fragmentShaderColor);
+
 	GLuint shaderTest = compileShader(vertexShaderTest, fragmentShaderTest);
 	Shader lightingShader("./shaders/test.vs", "./shaders/test.fs");
+	Shader shaderTest2("./shaders/test_no_texture.vs", "./shaders/test_no_texture.fs");
+	Shader lightCubeShader("./shaders/light_cube.vs", "./shaders/light_cube.fs");
+	Shader materialShader("./shaders/materials.vs", "./shaders/materials.fs");
 
 	// TRACK
-	glBindVertexArray(VAO_Track);
-	glBindBuffer(GL_ARRAY_BUFFER, VBO_Track);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(groundVertices), groundVertices, GL_STATIC_DRAW);
-	// position
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, COMPONENTS * sizeof(float), (void *)0);
+	// glBindVertexArray(VAO_Track);
+	// glBindBuffer(GL_ARRAY_BUFFER, VBO_Track);
+	// glBufferData(GL_ARRAY_BUFFER, sizeof(groundVertices), groundVertices, GL_STATIC_DRAW);
+	// // position
+	// glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, COMPONENTS * sizeof(float), (void *)0);
+	// glEnableVertexAttribArray(0);
+	// // cor
+	// glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, COMPONENTS * sizeof(float), (void *)(3 * sizeof(float)));
+	// glEnableVertexAttribArray(1);
+	// // normais
+	// glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, COMPONENTS * sizeof(float), (void *)(6 * sizeof(float)));
+	// glEnableVertexAttribArray(2);
+	// // // texture
+	// glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, COMPONENTS * sizeof(float), (void *)(9 * sizeof(float)));
+	// glEnableVertexAttribArray(3);
+
+	// Light source test
+	glBindVertexArray(VAO_LightSource);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO_LightSource);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(lightVertices), lightVertices, GL_STATIC_DRAW);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
-	// cor
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, COMPONENTS * sizeof(float), (void *)(3 * sizeof(float)));
-	glEnableVertexAttribArray(1);
-	// normais
-	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, COMPONENTS * sizeof(float), (void *)(6 * sizeof(float)));
-	glEnableVertexAttribArray(2);
-	// texture
-	glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, COMPONENTS * sizeof(float), (void *)(9 * sizeof(float)));
-	glEnableVertexAttribArray(3);
+
+	// Cube test
+	glBindVertexArray(cubeVAO);
+	glBindBuffer(GL_ARRAY_BUFFER, cubeVBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(lightVertices), lightVertices, GL_STATIC_DRAW);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(0);
 
 	glBind_object(car);
 	glBind_object(background);
@@ -543,60 +601,93 @@ int main()
 	while (!glfwWindowShouldClose(window))
 	{
 		// Atender os eventos
-		// processInput(window);
+		processInput(window);
 
 		// Limpar a tela
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		glClearColor(green.x, green.y, green.z, 1.0f);
+		// glClearColor(green.x, green.y, green.z, 1.0f);
+        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+
+		// glm::mat4 model = glm::mat4(1.0f);
+		// glm::mat4 view = glm::mat4(1.0f);
+		// glm::mat4 projection = glm::mat4(1.0f);
+		// view = glm::translate(view, glm::vec3(0.0f, 0.0f, -5.0f));
+		// view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+		// projection = glm::perspective(glm::radians(zoom), 800.0f / 600.0f, 0.1f, 100.0f);
 
 		glm::mat4 model = glm::mat4(1.0f);
-		glm::mat4 view = glm::mat4(1.0f);
-		glm::mat4 projection = glm::mat4(1.0f);
-		view = glm::translate(view, glm::vec3(0.0f, 0.0f, -5.0f));
-		view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
-		projection = glm::perspective(glm::radians(zoom), 800.0f / 600.0f, 0.1f, 100.0f);
+		glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+        glm::mat4 view = camera.GetViewMatrix();
+        materialShader.setMat4("projection", projection);
+        materialShader.setMat4("view", view);
 
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, track_texture);
+		/* TRACK START */
+		// glActiveTexture(GL_TEXTURE0);
+		// glBindTexture(GL_TEXTURE_2D, track_texture);
+		// model = glm::mat4(1.0f);
+		// glUseProgram(shaderTest);
+		// glUniformMatrix4fv(glGetUniformLocation(shaderTest, "model"), 1, GL_FALSE, glm::value_ptr(model));
+		// glUniformMatrix4fv(glGetUniformLocation(shaderTest, "view"), 1, GL_FALSE, glm::value_ptr(view));
+		// glUniformMatrix4fv(glGetUniformLocation(shaderTest, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+		// glBindVertexArray(VAO_Track);
+		// glDrawArrays(GL_TRIANGLES, 0, 6);
+		/* TRACK END */
 
-		model = glm::mat4(1.0f);
-		lightingShader.use();
-		lightingShader.setVec3("light.position", lightPos);
-		lightingShader.setVec3("viewPos", cameraPos);
+		/* CUBE TEST START*/
+		materialShader.use();
+        materialShader.setVec3("light.position", lightPos);
+        materialShader.setVec3("viewPos", cameraPos);
 
-		glm::vec3 lightColor = glm::vec3(1.0f, 1.0f, 1.0f);
+		glm::vec3 lightColor;
+        lightColor = glm::vec3(1.0f, 1.0f, 1.0f);
+
 		glm::vec3 diffuseColor = lightColor   * glm::vec3(0.5f); // decrease the influence
-		glm::vec3 ambientColor = diffuseColor * glm::vec3(0.2f); // low influence
+        glm::vec3 ambientColor = diffuseColor * glm::vec3(0.2f); // low influence
 
-		lightingShader.setVec3("light.ambient", ambientColor);
-		lightingShader.setVec3("light.diffuse", diffuseColor);
-		lightingShader.setVec3("light.specular", 1.0f, 1.0f, 1.0f);
+        materialShader.setVec3("light.ambient", ambientColor);
+        materialShader.setVec3("light.diffuse", diffuseColor);
+        materialShader.setVec3("light.specular", 1.0f, 1.0f, 1.0f);
 
-		// material properties
-		lightingShader.setVec3("material.ambient", 1.0f, 0.5f, 0.31f);
-		lightingShader.setVec3("material.diffuse", 1.0f, 0.5f, 0.31f);
-		lightingShader.setVec3("material.specular", 0.5f, 0.5f, 0.5f); // specular lighting doesn't have full effect on this object's material
-		lightingShader.setFloat("material.shininess", 32.0f);
+        // material properties
+        materialShader.setVec3("material.ambient", 1.0f, 0.5f, 0.31f);
+        materialShader.setVec3("material.diffuse", 1.0f, 0.5f, 0.31f);
+        materialShader.setVec3("material.specular", 0.5f, 0.5f, 0.5f); // specular lighting doesn't have full effect on this object's material
+        materialShader.setFloat("material.shininess", 32.0f);
 
-		lightingShader.setMat4("model", model);
-		lightingShader.setMat4("view", view);
-		lightingShader.setMat4("projection", projection);
-		
-		glBindVertexArray(VAO_Track);
-		glDrawArrays(GL_TRIANGLES, 0, 6);
+        model = glm::mat4(1.0f);
+        model = glm::translate(model, glm::vec3(0.0f, 1.5f, 0.0f));
+		materialShader.setMat4("projection", projection);
+        materialShader.setMat4("view", view);
+        materialShader.setMat4("model", model);
+		glBindVertexArray(cubeVAO);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+		/* CUBE TEST END*/
+
+		/* LIGHT SOURCE START*/
+		lightCubeShader.use();
+		lightCubeShader.setMat4("projection", projection);
+		lightCubeShader.setMat4("view", view);
+		model = glm::mat4(1.0f);
+		model = glm::translate(model, lightPos);
+        model = glm::scale(model, glm::vec3(0.2f)); // a smaller cube
+		lightCubeShader.setMat4("model", model);
+		glBindVertexArray(VAO_LightSource);
+		glDrawArrays(GL_TRIANGLES, 0, 36);
+		/* LIGHT SOURCE END*/
+
+	
 
 		// bg
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, test_texture);
-		model = glm::mat4(1.0f);
-		render_object(background, 6, shaderTexture, model, view, projection);
+		// glActiveTexture(GL_TEXTURE0);
+		// glBindTexture(GL_TEXTURE_2D, test_texture);
+		// model = glm::mat4(1.0f);
+		// render_object(background, 6, shaderTexture, model, view, projection);
 
 		// sign
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, sign_texture);
-		render_object(sign, 6, shaderTexture, model, view, projection);
-
-		render_object(signBase, 1024, shaderColor, model, view, projection);
+		// glActiveTexture(GL_TEXTURE0);
+		// glBindTexture(GL_TEXTURE_2D, sign_texture);
+		// render_object(sign, 6, shaderTexture, model, view, projection);
+		// render_object(signBase, 1024, shaderColor, model, view, projection);
 
 
 		float currentFrame = glfwGetTime();
@@ -617,9 +708,9 @@ int main()
 
 		// Cria a matriz de modelo do carro
 		// glm::mat4 model = glm::mat4(1.0f);
-		model = glm::translate(model, carPosition); // Translação para a posição do carro
-		model = glm::rotate(model, glm::radians(carRotationAngle), glm::vec3(0.0f, 1.0f, 0.0f)); // Rotação do carro
-		render_object(car, 36*1000, shaderColor, model, view, projection);
+		// model = glm::translate(model, carPosition); // Translação para a posição do carro
+		// model = glm::rotate(model, glm::radians(carRotationAngle), glm::vec3(0.0f, 1.0f, 0.0f)); // Rotação do carro
+		// render_object(car, 36*1000, shaderColor, model, view, projection);
 
 		// Trocar os buffers da janela
 		glfwSwapBuffers(window);
@@ -650,15 +741,15 @@ void processCarInput(GLFWwindow *window, glm::vec3 &carPosition, float &carRotat
     glm::vec3 forward = glm::vec3(sin(glm::radians(carRotationAngle)), 0.0f, cos(glm::radians(carRotationAngle)));
 
     // Rotação do carro
-    if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
+    if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
         carRotationAngle += rotationSpeed * deltaTime; // Rotaciona para a esquerda
-    if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
+    if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         carRotationAngle -= rotationSpeed * deltaTime; // Rotaciona para a direita
 
     // Movimento do carro em relação à direção atual
-    if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
+    if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
         carPosition += forward * carSpeed * deltaTime; // Move para frente
-    if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
+    if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
         carPosition -= forward * carSpeed * deltaTime; // Move para trás
 }
 
@@ -747,55 +838,27 @@ void checkProgramLinkStatus(GLuint program)
 	}
 }
 
+
 void resetCamera()
 {
-	cameraPos = glm::vec3(-4.7f, 3.0f, 10.0f);
-	cameraFront = glm::vec3(0.4f, -0.3f, -1.0f);
-	cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
+	camera.Position = glm::vec3(-4.7f, 3.0f, 10.0f);
+	camera.Front = glm::vec3(0.4f, -0.3f, -1.0f);
+	camera.Up = glm::vec3(0.0f, 1.0f, 0.0f);
+	camera.WorldUp = glm::vec3(0.0f, 1.0f, 0.0f);
+	camera.Yaw = -90.0f;
+	camera.Pitch = 0.0f;
+	camera.MovementSpeed = 2.5f;
+	camera.MouseSensitivity = 0.1f;
+	camera.Zoom = 45.0f;
+	// cameraPos = glm::vec3(-4.7f, 3.0f, 10.0f);
+	// cameraFront = glm::vec3(0.4f, -0.3f, -1.0f);
+	// cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
 
-	sensitivity = 1.0f;
-	yaw = -90.0f;
-	pitch = 0.0f;
-	zoom = 45.0f;
+	// sensitivity = 1.0f;
+	// yaw = -90.0f;
+	// pitch = 0.0f;
+	// zoom = 45.0f;
 }
-
-// void processInput(GLFWwindow *window)
-// {
-// 	const float cameraSpeed = 0.05f; // adjust accordingly
-
-// 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-// 		glfwSetWindowShouldClose(window, true);
-
-// 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-// 		cameraPos += cameraSpeed * cameraFront;
-// 	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-// 		cameraPos -= cameraSpeed * cameraFront;
-// 	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-// 		cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
-// 	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-// 		cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
-// 	if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
-// 		cameraPos += glm::vec3(0.0f, 1.0f, 0.0f) * cameraSpeed;
-// 	if (glfwGetKey(window, GLFW_KEY_Z) == GLFW_PRESS)
-// 		cameraPos += glm::vec3(0.0f, -1.0f, 0.0f) * cameraSpeed;
-
-// 	if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
-// 		viraCamera(0.0f, 1.0f);
-// 	if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
-// 		viraCamera(0.0f, -1.0f);
-// 	if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
-// 		viraCamera(-1.0f, 0.0f);
-// 	if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
-// 		viraCamera(1.0f, 0.0f);
-
-// 	if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
-// 		zoomControl(1.0f);
-// 	if (glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS)
-// 		zoomControl(-1.0f);
-
-// 	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
-// 		resetCamera();
-// }
 
 int init_gl_context()
 {
@@ -883,9 +946,12 @@ int init_sound_engine()
 		printf("Erro ao inicializar a engine de SOM!!\n");
 		return -1;
 	}
-	const char* musicFile = "sounds/topgear-soundtrack1.ogg";
 	ISound* music = soundEngine->play2D(musicFile,
 		true, false, true, ESM_AUTO_DETECT, true);
+	music->setVolume(0.1f);
+
+	// preload do bonk
+	soundEngine->addSoundSourceFromFile(bonkFile, ESM_AUTO_DETECT, true);
 
 	if (!musicFile) return -1;
 	return 1;
@@ -896,5 +962,20 @@ void play_bonk()
 #ifdef __APPLE__
 	return 1; // sem som no mac :/
 #endif
-	soundEngine->play2D("sounds/bonk.ogg");
+	soundEngine->play2D(bonkFile);
+}
+
+void processInput(GLFWwindow *window)
+{
+    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+        glfwSetWindowShouldClose(window, true);
+
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+        camera.ProcessKeyboard(FORWARD, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+        camera.ProcessKeyboard(BACKWARD, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+        camera.ProcessKeyboard(LEFT, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+        camera.ProcessKeyboard(RIGHT, deltaTime);
 }

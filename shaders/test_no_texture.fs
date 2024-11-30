@@ -2,7 +2,6 @@
 in vec3 Color;
 in vec3 FragPos;
 in vec3 Normal;
-in vec2 TextCoord;
 uniform sampler2D texture1;
 
 out vec4 FragColor;
@@ -40,10 +39,6 @@ void main() {
 	vec3 reflectDir = reflect(-lightDir, norm);
 	float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
 	vec3 specular = light.specular * (spec * material.specular);
-
-	vec3 objectColor = texture(texture1, TextCoord).rgb;
-	vec3 result = (ambient + diffuse) * objectColor + specular;
-	// vec3 result = ambient + diffuse + specular;
-
+	vec3 result = ambient + diffuse + specular;
 	FragColor = vec4(result, 1.0);
 };
