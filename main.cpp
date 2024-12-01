@@ -28,6 +28,7 @@ unsigned int load_texture(const char* path);
 std::vector<float> createPlaneWithTexture(float width, float height, glm::vec3 center);
 void glBind_object(Object& obj);
 std::vector<float> createQuadVertices(float width, float height, float depth, glm::vec3 center, glm::vec3 color);
+std::vector<float> createQuadVertices(float width, float height, float depth, glm::vec3 center);
 void mergeVec(std::vector<float> &dest, std::vector<float> v1, std::vector<float> v2);
 void mergeVec(std::vector<float> &dest, std::vector<float> v1);
 std::vector<float> createCarVertices();
@@ -38,7 +39,8 @@ const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
 
 // camera
-Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
+Camera camera(glm::vec3(-4.97621f, 2.79689f, 7.93694f));
+
 float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
 bool firstMouse = true;
@@ -66,50 +68,6 @@ float trackVertices[] = {
     -5.0f,  -0.6f,  5.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f,
     -5.0f,  -0.6f, -5.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f,
      5.0f,  -0.6f, -5.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f};
-
-float vertices[] = {
-        -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-         0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-         0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-         0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-        -0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-        -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-
-        -0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
-         0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
-         0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
-         0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
-        -0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
-        -0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
-
-        -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
-        -0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
-        -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
-        -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
-        -0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
-        -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
-
-         0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
-         0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
-         0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
-         0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
-         0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
-         0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
-
-        -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
-         0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
-         0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
-         0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
-        -0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
-        -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
-
-        -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
-         0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
-         0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
-         0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
-        -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
-        -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f
-};
 
 int main()
 {
@@ -163,7 +121,7 @@ int main()
     // ------------------------------------
     Shader lightingShader("./shaders/materials.vs", "./shaders/materials.fs");
     Shader lightCubeShader("./shaders/light_cube.vs", "./shaders/light_cube.fs");
-    Shader lightingTextureShader("./shaders/materials_texture.vs", "./shaders/materials_texture.fs");
+    Shader lightingTextureShader("./shaders/materials_texture.vs", "./shaders/materials_texture_directional.fs");
     Shader lightingColorShader("./shaders/materials_color.vs", "./shaders/materials_color.fs");
 
 	GLuint track_texture = load_texture("./images/track2.jpg");
@@ -172,18 +130,7 @@ int main()
     // set up vertex data (and buffer(s)) and configure vertex attributes
     // ------------------------------------------------------------------
     // first, configure the cube's VAO (and VBO)
-    unsigned int VBO, cubeVAO;
-    glGenVertexArrays(1, &cubeVAO);
-    glGenBuffers(1, &VBO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-    glBindVertexArray(cubeVAO);
-    // position attribute
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-    // normal attribute
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
-    glEnableVertexAttribArray(1);
+    
 
     /* TRACK START */
     unsigned int trackVBO, trackVAO;
@@ -204,13 +151,22 @@ int main()
     /* TRACK END */
 
     /* LIGHT CUBE START*/
-    unsigned int lightCubeVAO;
+    unsigned int lightCubeVBO, lightCubeVAO;
     glGenVertexArrays(1, &lightCubeVAO);
-    glBindVertexArray(lightCubeVAO);
+    glGenBuffers(1, &lightCubeVBO);
 
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	std::vector<float> headlights = createQuadVertices(0.9f, 0.05f, 0.1f, lightPos);
+
+
+    glBindBuffer(GL_ARRAY_BUFFER, lightCubeVBO);
+    glBufferData(GL_ARRAY_BUFFER, headlights.size() * sizeof(float), headlights.data(), GL_STATIC_DRAW);
+    glBindVertexArray(lightCubeVAO);
+    // position attribute
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
+    // normal attribute
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
     /* LIGHT CUBE END*/
 
     /* BACKGROUND START */
@@ -297,34 +253,11 @@ int main()
         glm::vec3 diffuseColor = lightColor   * glm::vec3(0.5f); // decrease the influence
         glm::vec3 ambientColor = diffuseColor * glm::vec3(0.2f); // low influence
 
-        { /* DRAW CUBE (removed)*/
-            lightingShader.use();
-            lightingShader.setVec3("light.position", lightPos);
-            lightingShader.setVec3("viewPos", camera.Position);
-            lightingShader.setVec3("light.ambient", ambientColor);
-            lightingShader.setVec3("light.diffuse", diffuseColor);
-
-            lightingShader.setVec3("material.ambient", 1.0f, 0.5f, 0.31f);
-            lightingShader.setVec3("material.diffuse", 1.0f, 0.5f, 0.31f);
-            lightingShader.setVec3("material.specular", 0.5f, 0.5f, 0.5f); // specular lighting doesn't have full effect on this object's material
-            lightingShader.setFloat("material.shininess", 32.0f);   
-            lightingShader.setVec3("light.specular", 1.0f, 1.0f, 1.0f);
-
-            model = glm::mat4(1.0f);
-            lightingShader.setMat4("model", model);
-            lightingShader.setMat4("projection", projection);
-            lightingShader.setMat4("view", view);
-
-
-            // render the cube
-            // glBindVertexArray(cubeVAO);
-            // glDrawArrays(GL_TRIANGLES, 0, 36);
-        }
-
         { /* DRAW TRACK, BACKGROUND */
             lightingTextureShader.use();
+            glm::vec3 carForward = glm::normalize(glm::vec3(-sin(glm::radians(carRotationAngle)), 0.0f, -cos(glm::radians(carRotationAngle))));
 
-            lightingTextureShader.setVec3("light.position", lightPos);
+            lightingTextureShader.setVec3("light.direction", carForward);
             lightingTextureShader.setVec3("viewPos", camera.Position);
             lightingTextureShader.setVec3("light.ambient", ambientColor);
             lightingTextureShader.setVec3("light.diffuse", diffuseColor);
@@ -333,7 +266,7 @@ int main()
             lightingTextureShader.setVec3("material.diffuse", 1.0f, 1.0f, 1.0f);
             lightingTextureShader.setVec3("material.specular", 0.5f, 0.5f, 0.5f); // specular lighting doesn't have full effect on this object's material
             lightingTextureShader.setFloat("material.shininess", 32.0f);   
-            lightingTextureShader.setVec3("light.specular", 1.0f, 1.0f, 1.0f);
+            lightingTextureShader.setVec3("light.specular", 0.25f, 0.25f, 0.25f); // reduce specular light intensity
 
             model = glm::mat4(1.0f);
             lightingTextureShader.setMat4("model", model);
@@ -371,31 +304,29 @@ int main()
             glm::vec3 rotatedLightOffset = glm::rotate(glm::mat4(1.0f), glm::radians(carRotationAngle), glm::vec3(0.0f, 1.0f, 0.0f)) * glm::vec4(lightOffset, 0.0f);
             lightPos = carPosition + rotatedLightOffset; // Atualiza a posição da luz para a posição do farol do carro
             lightingColorShader.setVec3("light.position", lightPos);
-            model = glm::mat4(1.0f);
+            
             // Cria a matriz de modelo do carro
-            // glm::mat4 model = glm::mat4(1.0f);
+            model = glm::mat4(1.0f);
             model = glm::translate(model, carPosition); // Translação para a posição do carro
             model = glm::rotate(model, glm::radians(carRotationAngle), glm::vec3(0.0f, 1.0f, 0.0f)); // Rotação do carro
+            
+            
             lightingColorShader.setMat4("model", model);
             lightingColorShader.setMat4("projection", projection);
             lightingColorShader.setMat4("view", view);
 
-            // render track
+            // render car
             glBindVertexArray(carVAO);
             glDrawArrays(GL_TRIANGLES, 0, 6*1024);
-        }
 
-        { /* DRAW LAMP */
+            // render light
+            // usamos o mesmo model do carro para ficar na mesma posicao
             lightCubeShader.use();
+            lightCubeShader.setMat4("model", model);
             lightCubeShader.setMat4("projection", projection);
             lightCubeShader.setMat4("view", view);
-            model = glm::mat4(1.0f);
-            model = glm::translate(model, lightPos);
-            model = glm::scale(model, glm::vec3(0.2f)); // a smaller cube
-            lightCubeShader.setMat4("model", model);
-
             glBindVertexArray(lightCubeVAO);
-            glDrawArrays(GL_TRIANGLES, 0, 36);
+            glDrawArrays(GL_TRIANGLES, 0, 6*6);
         }
        
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
@@ -403,12 +334,6 @@ int main()
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
-
-    // optional: de-allocate all resources once they've outlived their purpose:
-    // ------------------------------------------------------------------------
-    glDeleteVertexArrays(1, &cubeVAO);
-    glDeleteVertexArrays(1, &lightCubeVAO);
-    glDeleteBuffers(1, &VBO);
 
     // glfw: terminate, clearing all previously allocated GLFW resources.
     // ------------------------------------------------------------------
@@ -522,17 +447,6 @@ void glBind_object(Object& obj)
     // texture attribute
 	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, components * sizeof(float), (void *)(6 * sizeof(float)));
 	glEnableVertexAttribArray(2);
-
-	// // se tem textura entao nao tem cor
-	// if (obj.texture) {
-	// 	// texture attribute
-    //     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, components * sizeof(float), (void *)(6 * sizeof(float)));
-    //     glEnableVertexAttribArray(2);
-	// } else {
-    //     // TODO veriticar se esta correto
-	// 	glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, components * sizeof(float), (void *)(3 * sizeof(float)));
-	// 	glEnableVertexAttribArray(1);
-	// }
 }
 
 std::vector<float> createPlaneWithTexture(float width, float height, glm::vec3 center)
@@ -616,6 +530,65 @@ std::vector<float> createQuadVertices(float width, float height, float depth, gl
 	return vertices;
 }
 
+std::vector<float> createQuadVertices(float width, float height, float depth, glm::vec3 center)
+{
+	float halfWidth = width / 2.0f;
+	float halfHeight = height / 2.0f;
+	float halfDepth = depth / 2.0f;
+
+    std::vector<float> vertices = {
+        // Front face
+        center.x - halfWidth, center.y - halfHeight, center.z + halfDepth, 0.0f, 0.0f, 1.0f,
+        center.x + halfWidth, center.y - halfHeight, center.z + halfDepth, 0.0f, 0.0f, 1.0f,
+        center.x + halfWidth, center.y + halfHeight, center.z + halfDepth, 0.0f, 0.0f, 1.0f,
+        center.x + halfWidth, center.y + halfHeight, center.z + halfDepth, 0.0f, 0.0f, 1.0f,
+        center.x - halfWidth, center.y + halfHeight, center.z + halfDepth, 0.0f, 0.0f, 1.0f,
+        center.x - halfWidth, center.y - halfHeight, center.z + halfDepth, 0.0f, 0.0f, 1.0f,
+
+        // Back face
+        center.x - halfWidth, center.y - halfHeight, center.z - halfDepth, 0.0f, 0.0f, -1.0f,
+        center.x + halfWidth, center.y - halfHeight, center.z - halfDepth, 0.0f, 0.0f, -1.0f,
+        center.x + halfWidth, center.y + halfHeight, center.z - halfDepth, 0.0f, 0.0f, -1.0f,
+        center.x + halfWidth, center.y + halfHeight, center.z - halfDepth, 0.0f, 0.0f, -1.0f,
+        center.x - halfWidth, center.y + halfHeight, center.z - halfDepth, 0.0f, 0.0f, -1.0f,
+        center.x - halfWidth, center.y - halfHeight, center.z - halfDepth, 0.0f, 0.0f, -1.0f,
+
+        // Left face
+        center.x - halfWidth, center.y + halfHeight, center.z + halfDepth, -1.0f, 0.0f, 0.0f,
+        center.x - halfWidth, center.y + halfHeight, center.z - halfDepth, -1.0f, 0.0f, 0.0f,
+        center.x - halfWidth, center.y - halfHeight, center.z - halfDepth, -1.0f, 0.0f, 0.0f,
+        center.x - halfWidth, center.y - halfHeight, center.z - halfDepth, -1.0f, 0.0f, 0.0f,
+        center.x - halfWidth, center.y - halfHeight, center.z + halfDepth, -1.0f, 0.0f, 0.0f,
+        center.x - halfWidth, center.y + halfHeight, center.z + halfDepth, -1.0f, 0.0f, 0.0f,
+
+        // Right face
+        center.x + halfWidth, center.y + halfHeight, center.z + halfDepth, 1.0f, 0.0f, 0.0f,
+        center.x + halfWidth, center.y + halfHeight, center.z - halfDepth, 1.0f, 0.0f, 0.0f,
+        center.x + halfWidth, center.y - halfHeight, center.z - halfDepth, 1.0f, 0.0f, 0.0f,
+        center.x + halfWidth, center.y - halfHeight, center.z - halfDepth, 1.0f, 0.0f, 0.0f,
+        center.x + halfWidth, center.y - halfHeight, center.z + halfDepth, 1.0f, 0.0f, 0.0f,
+        center.x + halfWidth, center.y + halfHeight, center.z + halfDepth, 1.0f, 0.0f, 0.0f,
+
+        // Top face
+        center.x - halfWidth, center.y + halfHeight, center.z - halfDepth, 0.0f, 1.0f, 0.0f,
+        center.x + halfWidth, center.y + halfHeight, center.z - halfDepth, 0.0f, 1.0f, 0.0f,
+        center.x + halfWidth, center.y + halfHeight, center.z + halfDepth, 0.0f, 1.0f, 0.0f,
+        center.x + halfWidth, center.y + halfHeight, center.z + halfDepth, 0.0f, 1.0f, 0.0f,
+        center.x - halfWidth, center.y + halfHeight, center.z + halfDepth, 0.0f, 1.0f, 0.0f,
+        center.x - halfWidth, center.y + halfHeight, center.z - halfDepth, 0.0f, 1.0f, 0.0f,
+
+        // Bottom face
+        center.x - halfWidth, center.y - halfHeight, center.z - halfDepth, 0.0f, -1.0f, 0.0f,
+        center.x + halfWidth, center.y - halfHeight, center.z - halfDepth, 0.0f, -1.0f, 0.0f,
+        center.x + halfWidth, center.y - halfHeight, center.z + halfDepth, 0.0f, -1.0f, 0.0f,
+        center.x + halfWidth, center.y - halfHeight, center.z + halfDepth, 0.0f, -1.0f, 0.0f,
+        center.x - halfWidth, center.y - halfHeight, center.z + halfDepth, 0.0f, -1.0f, 0.0f,
+        center.x - halfWidth, center.y - halfHeight, center.z - halfDepth, 0.0f, -1.0f, 0.0f,
+    };
+
+	return vertices;
+}
+
 std::vector<float> createCarVertices()
 {
 	std::vector<float> bottom = createQuadVertices(1.0f, 0.5f, 2.0f,
@@ -679,15 +652,12 @@ std::vector<float> createCarVertices()
 
 	std::vector<float> lights;
 
-	std::vector<float> headlights = createQuadVertices(0.9f, 0.05f, 0.1f, lightPos, white);
-
 	std::vector<float> taillights = createQuadVertices(0.25f, 0.1f, 0.1f,     glm::vec3(-0.2f, -0.1f, -1.0f), red);
 	std::vector<float> rightTaillight = createQuadVertices(0.25f, 0.1f, 0.1f, glm::vec3(0.2f,  -0.1f, -1.0f), red);
 
 	std::vector<float> leftBlinker = createQuadVertices(0.1f, 0.1f, 0.1f,     glm::vec3(-0.37f, -0.1f, -1.0f), yellow);
 	std::vector<float> rightBlinker = createQuadVertices(0.1f, 0.1f, 0.1f,    glm::vec3(0.37f,  -0.1f, -1.0f), yellow);
 
-	mergeVec(lights, headlights);
 	mergeVec(lights, taillights, rightTaillight);
 	mergeVec(lights, leftBlinker, rightBlinker);
 
@@ -734,4 +704,9 @@ void processCarInput(GLFWwindow *window, glm::vec3 &carPosition, float &carRotat
         carPosition += forward * carSpeed * deltaTime; // Move para frente
     if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
         carPosition -= forward * carSpeed * deltaTime; // Move para trás
+
+    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
+        // imprima as coordenadas da camera e do carro
+        camera.print_coordenates();
+    }
 }
