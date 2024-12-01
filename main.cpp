@@ -1,17 +1,30 @@
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
+#ifdef __APPLE__
+#include <glad/glad.h>
+#endif
 
+#ifdef __linux__
+#include <GL/glew.h>
+#endif
+
+#include <GLFW/glfw3.h>
+#define STB_IMAGE_IMPLEMENTATION
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <iostream>
+#include <stdio.h>
+#include <vector>
+
+#ifdef __linux__
+#include <irrKlang.h>
+using namespace irrklang;
+#endif
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
 #include "shader_m.h"
 #include "camera.h"
-
-#include <iostream>
 
 typedef struct {
 	glm::vec3 position;
@@ -33,6 +46,9 @@ void mergeVec(std::vector<float> &dest, std::vector<float> v1, std::vector<float
 void mergeVec(std::vector<float> &dest, std::vector<float> v1);
 std::vector<float> createCarVertices();
 void processCarInput(GLFWwindow *window, glm::vec3 &carPosition, float &carRotationAngle, float deltaTime);
+int init_sound_engine();
+void play_bonk();
+bool isCarWithinRadius(const glm::vec3 &carPosition, float minRadius, float maxRadius);
 
 // settings
 const unsigned int SCR_WIDTH = 800;
@@ -68,6 +84,8 @@ float trackVertices[] = {
     -5.0f,  -0.6f,  5.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f,
     -5.0f,  -0.6f, -5.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f,
      5.0f,  -0.6f, -5.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f};
+
+ISoundEngine* soundEngine;
 
 int main()
 {
@@ -108,6 +126,8 @@ int main()
         std::cout << "GLEW OK!" << std::endl;
         std::cout << glGetString(GL_VERSION) << std::endl;
     }
+
+	if (init_sound_engine() < 0) return 1;
 
     float lastFrame = 0.0f;
 	glm::vec3 carPosition(2.7f, 0.0f, 1.0f);
@@ -234,6 +254,12 @@ int main()
         processInput(window);
 		processCarInput(window, carPosition, carRotationAngle, deltaTime);
 
+        if (!isCarWithinRadius(carPosition, 1.8f, 4.0f)) {
+			play_bonk();
+			carPosition = glm::vec3(2.7f, 0.0f, 1.0f);
+			carRotationAngle = 0.0f;
+		}
+
         // render
         // ------
 		glClearColor(0.09f, 0.078f, 0.0f, 1.0f);
@@ -304,7 +330,6 @@ int main()
             glm::vec3 rotatedLightOffset = glm::rotate(glm::mat4(1.0f), glm::radians(carRotationAngle), glm::vec3(0.0f, 1.0f, 0.0f)) * glm::vec4(lightOffset, 0.0f);
             lightPos = carPosition + rotatedLightOffset; // Atualiza a posição da luz para a posição do farol do carro
             lightingColorShader.setVec3("light.position", lightPos);
-            
             // Cria a matriz de modelo do carro
             model = glm::mat4(1.0f);
             model = glm::translate(model, carPosition); // Translação para a posição do carro
@@ -709,4 +734,37 @@ void processCarInput(GLFWwindow *window, glm::vec3 &carPosition, float &carRotat
         // imprima as coordenadas da camera e do carro
         camera.print_coordenates();
     }
+}
+
+bool isCarWithinRadius(const glm::vec3 &carPosition, float minRadius, float maxRadius) {
+    float distance = glm::length(carPosition);
+    return distance <= maxRadius && distance >= minRadius;
+}
+
+
+int init_sound_engine()
+{
+#ifdef __APPLE__
+	return 1; // sem som no mac :/
+#endif
+
+	soundEngine = createIrrKlangDevice();
+	if (!soundEngine) {
+		printf("Erro ao inicializar a engine de SOM!!\n");
+		return -1;
+	}
+	const char* musicFile = "sounds/topgear-soundtrack1.ogg";
+	ISound* music = soundEngine->play2D(musicFile,
+		true, false, true, ESM_AUTO_DETECT, true);
+
+	if (!musicFile) return -1;
+	return 1;
+}
+
+void play_bonk()
+{
+#ifdef __APPLE__
+	return 1; // sem som no mac :/
+#endif
+	soundEngine->play2D("sounds/bonk.wav");
 }
