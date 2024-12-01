@@ -27,6 +27,11 @@ void processInput(GLFWwindow *window);
 unsigned int load_texture(const char* path);
 std::vector<float> createPlaneWithTexture(float width, float height, glm::vec3 center);
 void glBind_object(Object& obj);
+std::vector<float> createQuadVertices(float width, float height, float depth, glm::vec3 center, glm::vec3 color);
+void mergeVec(std::vector<float> &dest, std::vector<float> v1, std::vector<float> v2);
+void mergeVec(std::vector<float> &dest, std::vector<float> v1);
+std::vector<float> createCarVertices();
+void processCarInput(GLFWwindow *window, glm::vec3 &carPosition, float &carRotationAngle, float deltaTime);
 
 // settings
 const unsigned int SCR_WIDTH = 800;
@@ -43,7 +48,15 @@ float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
 // lighting
-glm::vec3 lightPos(0.0f, 1.0f, 0.0f);
+glm::vec3 lightPos(0.0f, -0.1f, 1.0f); // posicao do farol do carro!
+
+// cores
+glm::vec3 black = glm::vec3(0.0f, 0.0f, 0.0f);
+glm::vec3 pink = glm::vec3(0.867f, 0.667f, 0.933f);
+glm::vec3 green = glm::vec3(0.408f,0.722f,0.004f);
+glm::vec3 red = glm::vec3(1.0f, 0.0f, 0.0f);
+glm::vec3 white = glm::vec3(1.0f, 1.0f, 1.0f);
+glm::vec3 yellow = glm::vec3(1.0f, 0.5f, 0.0f);
 
 float trackVertices[] = {
 //   x       y      z     xn    yn    zn    u     v
@@ -132,10 +145,15 @@ int main()
     // ---------------------------------------
     if(glewInit()!=GLEW_OK) {
         std::cout << "Ocorreu um erro iniciando GLEW!" << std::endl;
+        return 1;
     } else {
         std::cout << "GLEW OK!" << std::endl;
         std::cout << glGetString(GL_VERSION) << std::endl;
     }
+
+    float lastFrame = 0.0f;
+	glm::vec3 carPosition(2.7f, 0.0f, 1.0f);
+	float carRotationAngle = 0.0f;
 
     // configure global opengl state
     // -----------------------------
@@ -146,6 +164,7 @@ int main()
     Shader lightingShader("./shaders/materials.vs", "./shaders/materials.fs");
     Shader lightCubeShader("./shaders/light_cube.vs", "./shaders/light_cube.fs");
     Shader lightingTextureShader("./shaders/materials_texture.vs", "./shaders/materials_texture.fs");
+    Shader lightingColorShader("./shaders/materials_color.vs", "./shaders/materials_color.fs");
 
 	GLuint track_texture = load_texture("./images/track2.jpg");
     GLuint background_texture = load_texture("./images/crowd-1.jpg");
@@ -217,9 +236,32 @@ int main()
     // texture attribute
 	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)(6 * sizeof(float)));
 	glEnableVertexAttribArray(2);
-
-    // glBind_object(background);
     /* BACKGROUND END */
+
+    /* CAR START*/
+    unsigned int carVBO, carVAO;
+    glGenVertexArrays(1, &carVAO);
+    glGenBuffers(1, &carVBO);
+
+    Object car;
+	car.position = glm::vec3(0.0f);
+    car.vertices =  createCarVertices();
+    car.vao = carVAO;
+    car.texture = false;
+
+    glBindBuffer(GL_ARRAY_BUFFER, carVBO);
+    glBufferData(GL_ARRAY_BUFFER, car.vertices.size() * sizeof(float), car.vertices.data(), GL_STATIC_DRAW);
+    glBindVertexArray(carVAO);
+    // position attribute
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+    // normal attribute
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+    // color attribute
+	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void *)(6 * sizeof(float)));
+	glEnableVertexAttribArray(2);
+    /* CAR END*/
 
     // render loop
     // -----------
@@ -234,6 +276,7 @@ int main()
         // input
         // -----
         processInput(window);
+		processCarInput(window, carPosition, carRotationAngle, deltaTime);
 
         // render
         // ------
@@ -286,8 +329,8 @@ int main()
             lightingTextureShader.setVec3("light.ambient", ambientColor);
             lightingTextureShader.setVec3("light.diffuse", diffuseColor);
 
-            lightingTextureShader.setVec3("material.ambient", 1.0f, 0.5f, 0.31f);
-            lightingTextureShader.setVec3("material.diffuse", 1.0f, 0.5f, 0.31f);
+            lightingTextureShader.setVec3("material.ambient", 1.0f, 1.0f, 1.0f);
+            lightingTextureShader.setVec3("material.diffuse", 1.0f, 1.0f, 1.0f);
             lightingTextureShader.setVec3("material.specular", 0.5f, 0.5f, 0.5f); // specular lighting doesn't have full effect on this object's material
             lightingTextureShader.setFloat("material.shininess", 32.0f);   
             lightingTextureShader.setVec3("light.specular", 1.0f, 1.0f, 1.0f);
@@ -308,6 +351,38 @@ int main()
 		    glBindTexture(GL_TEXTURE_2D, background_texture);
             glBindVertexArray(backgroundVAO);
             glDrawArrays(GL_TRIANGLES, 0, 6);
+        }
+
+        { /* DRAW CAR */
+            lightingColorShader.use();
+
+            lightingColorShader.setVec3("light.position", lightPos);
+            lightingColorShader.setVec3("viewPos", camera.Position);
+            lightingColorShader.setVec3("light.ambient", ambientColor);
+            lightingColorShader.setVec3("light.diffuse", diffuseColor);
+
+            lightingColorShader.setVec3("material.ambient", 0.25f, 0.20725f, 0.20725f);
+            lightingColorShader.setVec3("material.diffuse", 1.0f, 0.829f, 0.829f);
+            lightingColorShader.setVec3("material.specular", 0.296648f, 0.296648f, 0.296648f);
+            lightingColorShader.setFloat("material.shininess", 0.088f * 128.0f);   
+            lightingColorShader.setVec3("light.specular", 1.0f, 1.0f, 1.0f);
+
+            glm::vec3 lightOffset = glm::vec3(0.0f, 0.1f, 1.0f);
+            glm::vec3 rotatedLightOffset = glm::rotate(glm::mat4(1.0f), glm::radians(carRotationAngle), glm::vec3(0.0f, 1.0f, 0.0f)) * glm::vec4(lightOffset, 0.0f);
+            lightPos = carPosition + rotatedLightOffset; // Atualiza a posição da luz para a posição do farol do carro
+            lightingColorShader.setVec3("light.position", lightPos);
+            model = glm::mat4(1.0f);
+            // Cria a matriz de modelo do carro
+            // glm::mat4 model = glm::mat4(1.0f);
+            model = glm::translate(model, carPosition); // Translação para a posição do carro
+            model = glm::rotate(model, glm::radians(carRotationAngle), glm::vec3(0.0f, 1.0f, 0.0f)); // Rotação do carro
+            lightingColorShader.setMat4("model", model);
+            lightingColorShader.setMat4("projection", projection);
+            lightingColorShader.setMat4("view", view);
+
+            // render track
+            glBindVertexArray(carVAO);
+            glDrawArrays(GL_TRIANGLES, 0, 6*1024);
         }
 
         { /* DRAW LAMP */
@@ -479,4 +554,184 @@ std::vector<float> createPlaneWithTexture(float width, float height, glm::vec3 c
 	};
 
 	return vertices;
+}
+
+
+std::vector<float> createQuadVertices(float width, float height, float depth, glm::vec3 center, glm::vec3 color)
+{
+	float halfWidth = width / 2.0f;
+	float halfHeight = height / 2.0f;
+	float halfDepth = depth / 2.0f;
+
+    std::vector<float> vertices = {
+        // Front face
+        center.x - halfWidth, center.y - halfHeight, center.z + halfDepth, 0.0f, 0.0f, 1.0f, color.x, color.y, color.z,
+        center.x + halfWidth, center.y - halfHeight, center.z + halfDepth, 0.0f, 0.0f, 1.0f, color.x, color.y, color.z,
+        center.x + halfWidth, center.y + halfHeight, center.z + halfDepth, 0.0f, 0.0f, 1.0f, color.x, color.y, color.z,
+        center.x + halfWidth, center.y + halfHeight, center.z + halfDepth, 0.0f, 0.0f, 1.0f, color.x, color.y, color.z,
+        center.x - halfWidth, center.y + halfHeight, center.z + halfDepth, 0.0f, 0.0f, 1.0f, color.x, color.y, color.z,
+        center.x - halfWidth, center.y - halfHeight, center.z + halfDepth, 0.0f, 0.0f, 1.0f, color.x, color.y, color.z,
+
+        // Back face
+        center.x - halfWidth, center.y - halfHeight, center.z - halfDepth, 0.0f, 0.0f, -1.0f, color.x, color.y, color.z,
+        center.x + halfWidth, center.y - halfHeight, center.z - halfDepth, 0.0f, 0.0f, -1.0f, color.x, color.y, color.z,
+        center.x + halfWidth, center.y + halfHeight, center.z - halfDepth, 0.0f, 0.0f, -1.0f, color.x, color.y, color.z,
+        center.x + halfWidth, center.y + halfHeight, center.z - halfDepth, 0.0f, 0.0f, -1.0f, color.x, color.y, color.z,
+        center.x - halfWidth, center.y + halfHeight, center.z - halfDepth, 0.0f, 0.0f, -1.0f, color.x, color.y, color.z,
+        center.x - halfWidth, center.y - halfHeight, center.z - halfDepth, 0.0f, 0.0f, -1.0f, color.x, color.y, color.z,
+
+        // Left face
+        center.x - halfWidth, center.y + halfHeight, center.z + halfDepth, -1.0f, 0.0f, 0.0f, color.x, color.y, color.z,
+        center.x - halfWidth, center.y + halfHeight, center.z - halfDepth, -1.0f, 0.0f, 0.0f, color.x, color.y, color.z,
+        center.x - halfWidth, center.y - halfHeight, center.z - halfDepth, -1.0f, 0.0f, 0.0f, color.x, color.y, color.z,
+        center.x - halfWidth, center.y - halfHeight, center.z - halfDepth, -1.0f, 0.0f, 0.0f, color.x, color.y, color.z,
+        center.x - halfWidth, center.y - halfHeight, center.z + halfDepth, -1.0f, 0.0f, 0.0f, color.x, color.y, color.z,
+        center.x - halfWidth, center.y + halfHeight, center.z + halfDepth, -1.0f, 0.0f, 0.0f, color.x, color.y, color.z,
+
+        // Right face
+        center.x + halfWidth, center.y + halfHeight, center.z + halfDepth, 1.0f, 0.0f, 0.0f, color.x, color.y, color.z,
+        center.x + halfWidth, center.y + halfHeight, center.z - halfDepth, 1.0f, 0.0f, 0.0f, color.x, color.y, color.z,
+        center.x + halfWidth, center.y - halfHeight, center.z - halfDepth, 1.0f, 0.0f, 0.0f, color.x, color.y, color.z,
+        center.x + halfWidth, center.y - halfHeight, center.z - halfDepth, 1.0f, 0.0f, 0.0f, color.x, color.y, color.z,
+        center.x + halfWidth, center.y - halfHeight, center.z + halfDepth, 1.0f, 0.0f, 0.0f, color.x, color.y, color.z,
+        center.x + halfWidth, center.y + halfHeight, center.z + halfDepth, 1.0f, 0.0f, 0.0f, color.x, color.y, color.z,
+
+        // Top face
+        center.x - halfWidth, center.y + halfHeight, center.z - halfDepth, 0.0f, 1.0f, 0.0f, color.x, color.y, color.z,
+        center.x + halfWidth, center.y + halfHeight, center.z - halfDepth, 0.0f, 1.0f, 0.0f, color.x, color.y, color.z,
+        center.x + halfWidth, center.y + halfHeight, center.z + halfDepth, 0.0f, 1.0f, 0.0f, color.x, color.y, color.z,
+        center.x + halfWidth, center.y + halfHeight, center.z + halfDepth, 0.0f, 1.0f, 0.0f, color.x, color.y, color.z,
+        center.x - halfWidth, center.y + halfHeight, center.z + halfDepth, 0.0f, 1.0f, 0.0f, color.x, color.y, color.z,
+        center.x - halfWidth, center.y + halfHeight, center.z - halfDepth, 0.0f, 1.0f, 0.0f, color.x, color.y, color.z,
+
+        // Bottom face
+        center.x - halfWidth, center.y - halfHeight, center.z - halfDepth, 0.0f, -1.0f, 0.0f, color.x, color.y, color.z,
+        center.x + halfWidth, center.y - halfHeight, center.z - halfDepth, 0.0f, -1.0f, 0.0f, color.x, color.y, color.z,
+        center.x + halfWidth, center.y - halfHeight, center.z + halfDepth, 0.0f, -1.0f, 0.0f, color.x, color.y, color.z,
+        center.x + halfWidth, center.y - halfHeight, center.z + halfDepth, 0.0f, -1.0f, 0.0f, color.x, color.y, color.z,
+        center.x - halfWidth, center.y - halfHeight, center.z + halfDepth, 0.0f, -1.0f, 0.0f, color.x, color.y, color.z,
+        center.x - halfWidth, center.y - halfHeight, center.z - halfDepth, 0.0f, -1.0f, 0.0f, color.x, color.y, color.z,
+    };
+
+	return vertices;
+}
+
+std::vector<float> createCarVertices()
+{
+	std::vector<float> bottom = createQuadVertices(1.0f, 0.5f, 2.0f,
+												   glm::vec3(0.0f, -0.20f, 0.0f),
+												   pink);
+    std::vector<float> top = {
+        // x     y     z      xn    yn    zn    r      g      b
+        -0.3f, 0.0f, -0.5f,  0.0f,  1.0f,  0.0f, 0.0f, 0.451f, 1.0f,
+         0.3f, 0.0f, -0.5f,  0.0f,  1.0f,  0.0f, 0.0f, 0.451f, 1.0f,
+         0.3f, 0.3f, -0.5f,  0.0f,  1.0f,  0.0f, 0.0f, 0.451f, 1.0f,
+         0.3f, 0.3f, -0.5f,  0.0f,  1.0f,  0.0f, 0.0f, 0.451f, 1.0f,
+        -0.3f, 0.3f, -0.5f,  0.0f,  1.0f,  0.0f, 0.0f, 0.451f, 1.0f,
+        -0.3f, 0.0f, -0.5f,  0.0f,  1.0f,  0.0f, 0.0f, 0.451f, 1.0f,
+        -0.3f, 0.0f,  0.5f,  0.0f,  1.0f,  0.0f, 0.0f, 0.451f, 1.0f,
+         0.3f, 0.0f,  0.5f,  0.0f,  1.0f,  0.0f, 0.0f, 0.451f, 1.0f,
+         0.3f, 0.3f,  0.5f,  0.0f,  1.0f,  0.0f, 0.0f, 0.451f, 1.0f,
+         0.3f, 0.3f,  0.5f,  0.0f,  1.0f,  0.0f, 0.0f, 0.451f, 1.0f,
+        -0.3f, 0.3f,  0.5f,  0.0f,  1.0f,  0.0f, 0.0f, 0.451f, 1.0f,
+        -0.3f, 0.0f,  0.5f,  0.0f,  1.0f,  0.0f, 0.0f, 0.451f, 1.0f,
+
+        // top
+        -0.3f, 0.3f,  0.5f,  0.0f,  1.0f,  0.0f, 0.867f, 0.667f, 0.933f,
+         0.3f, 0.3f,  0.5f,  0.0f,  1.0f,  0.0f, 0.867f, 0.667f, 0.933f,
+         0.3f, 0.3f, -0.5f,  0.0f,  1.0f,  0.0f, 0.867f, 0.667f, 0.933f,
+         0.3f, 0.3f, -0.5f,  0.0f,  1.0f,  0.0f, 0.867f, 0.667f, 0.933f,
+        -0.3f, 0.3f, -0.5f,  0.0f,  1.0f,  0.0f, 0.867f, 0.667f, 0.933f,
+        -0.3f, 0.3f,  0.5f,  0.0f,  1.0f,  0.0f, 0.867f, 0.667f, 0.933f,
+
+        // front
+        -0.5f, 0.0f,  0.5f,  0.0f,  0.0f,  1.0f, 0.0f, 0.451f, 1.0f,
+         0.5f, 0.0f,  0.5f,  0.0f,  0.0f,  1.0f, 0.0f, 0.451f, 1.0f,
+         0.3f, 0.3f,  0.5f,  0.0f,  0.0f,  1.0f, 0.0f, 0.451f, 1.0f,
+         0.3f, 0.3f,  0.5f,  0.0f,  0.0f,  1.0f, 0.0f, 0.451f, 1.0f,
+        -0.3f, 0.3f,  0.5f,  0.0f,  0.0f,  1.0f, 0.0f, 0.451f, 1.0f,
+        -0.5f, 0.0f,  0.5f,  0.0f,  0.0f,  1.0f, 0.0f, 0.451f, 1.0f,
+
+        // back
+        -0.5f, 0.0f, -0.5f,  0.0f,  0.0f, -1.0f, 0.0f, 0.451f, 1.0f,
+         0.5f, 0.0f, -0.5f,  0.0f,  0.0f, -1.0f, 0.0f, 0.451f, 1.0f,
+         0.3f, 0.3f, -0.5f,  0.0f,  0.0f, -1.0f, 0.0f, 0.451f, 1.0f,
+         0.3f, 0.3f, -0.5f,  0.0f,  0.0f, -1.0f, 0.0f, 0.451f, 1.0f,
+        -0.3f, 0.3f, -0.5f,  0.0f,  0.0f, -1.0f, 0.0f, 0.451f, 1.0f,
+        -0.5f, 0.0f, -0.5f,  0.0f,  0.0f, -1.0f, 0.0f, 0.451f, 1.0f,
+
+        // Left window
+        -0.3f, 0.0f,  0.5f, -1.0f,  0.0f,  0.0f, 0.0f, 0.451f, 1.0f,
+        -0.3f, 0.3f,  0.5f, -1.0f,  0.0f,  0.0f, 0.0f, 0.451f, 1.0f,
+        -0.3f, 0.3f, -0.5f, -1.0f,  0.0f,  0.0f, 0.0f, 0.451f, 1.0f,
+        -0.3f, 0.3f, -0.5f, -1.0f,  0.0f,  0.0f, 0.0f, 0.451f, 1.0f,
+        -0.3f, 0.0f, -0.5f, -1.0f,  0.0f,  0.0f, 0.0f, 0.451f, 1.0f,
+        -0.3f, 0.0f,  0.5f, -1.0f,  0.0f,  0.0f, 0.0f, 0.451f, 1.0f,
+
+        // Right window
+         0.3f, 0.0f,  0.5f,  1.0f,  0.0f,  0.0f, 0.0f, 0.451f, 1.0f,
+         0.3f, 0.3f,  0.5f,  1.0f,  0.0f,  0.0f, 0.0f, 0.451f, 1.0f,
+         0.3f, 0.3f, -0.5f,  1.0f,  0.0f,  0.0f, 0.0f, 0.451f, 1.0f,
+         0.3f, 0.3f, -0.5f,  1.0f,  0.0f,  0.0f, 0.0f, 0.451f, 1.0f,
+         0.3f, 0.0f, -0.5f,  1.0f,  0.0f,  0.0f, 0.0f, 0.451f, 1.0f,
+         0.3f, 0.0f,  0.5f,  1.0f,  0.0f,  0.0f, 0.0f, 0.451f, 1.0f
+    };
+
+	std::vector<float> lights;
+
+	std::vector<float> headlights = createQuadVertices(0.9f, 0.05f, 0.1f, lightPos, white);
+
+	std::vector<float> taillights = createQuadVertices(0.25f, 0.1f, 0.1f,     glm::vec3(-0.2f, -0.1f, -1.0f), red);
+	std::vector<float> rightTaillight = createQuadVertices(0.25f, 0.1f, 0.1f, glm::vec3(0.2f,  -0.1f, -1.0f), red);
+
+	std::vector<float> leftBlinker = createQuadVertices(0.1f, 0.1f, 0.1f,     glm::vec3(-0.37f, -0.1f, -1.0f), yellow);
+	std::vector<float> rightBlinker = createQuadVertices(0.1f, 0.1f, 0.1f,    glm::vec3(0.37f,  -0.1f, -1.0f), yellow);
+
+	mergeVec(lights, headlights);
+	mergeVec(lights, taillights, rightTaillight);
+	mergeVec(lights, leftBlinker, rightBlinker);
+
+	std::vector<float> frontLeftWheel = createQuadVertices(0.2f, 0.2f, 0.2f, glm::vec3(-0.5f, -0.4f, 0.8f), black);
+	std::vector<float> frontRightWheel = createQuadVertices(0.2f, 0.2f, 0.2f, glm::vec3(0.5f, -0.4f, 0.8f), black);
+	std::vector<float> backLeftWheel = createQuadVertices(0.2f, 0.2f, 0.2f, glm::vec3(-0.5f, -0.4f, -0.8f), black);
+	std::vector<float> backRightWheel = createQuadVertices(0.2f, 0.2f, 0.2f, glm::vec3(0.5f, -0.4f, -0.8f), black);
+
+	std::vector<float> vertices;
+	mergeVec(vertices, lights);
+	mergeVec(vertices, bottom, top);
+	mergeVec(vertices, frontRightWheel, frontLeftWheel);
+	mergeVec(vertices, backRightWheel, backLeftWheel);
+
+	return vertices;
+}
+
+void mergeVec(std::vector<float> &dest, std::vector<float> v1, std::vector<float> v2)
+{
+	dest.insert(dest.end(), v1.begin(), v1.end());
+	dest.insert(dest.end(), v2.begin(), v2.end());
+}
+void mergeVec(std::vector<float> &dest, std::vector<float> v1)
+{
+	dest.insert(dest.end(), v1.begin(), v1.end());
+}
+
+void processCarInput(GLFWwindow *window, glm::vec3 &carPosition, float &carRotationAngle, float deltaTime)
+{
+    const float carSpeed = 2.0f;        // Velocidade de translação do carro
+    const float rotationSpeed = 90.0f; // Velocidade de rotação do carro (em graus por segundo)
+
+    // Calcular o vetor "forward" baseado no ângulo de rotação
+    glm::vec3 forward = glm::vec3(sin(glm::radians(carRotationAngle)), 0.0f, cos(glm::radians(carRotationAngle)));
+
+    // Rotação do carro
+    if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
+        carRotationAngle += rotationSpeed * deltaTime; // Rotaciona para a esquerda
+    if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
+        carRotationAngle -= rotationSpeed * deltaTime; // Rotaciona para a direita
+
+    // Movimento do carro em relação à direção atual
+    if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
+        carPosition += forward * carSpeed * deltaTime; // Move para frente
+    if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
+        carPosition -= forward * carSpeed * deltaTime; // Move para trás
 }
