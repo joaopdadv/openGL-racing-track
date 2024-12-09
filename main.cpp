@@ -55,7 +55,7 @@ const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
 
 // camera
-Camera camera(glm::vec3(-4.97621f, 2.79689f, 7.93694f));
+Camera camera(glm::vec3(-4.97621f, 2.79689f, 9.93694f));
 
 float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
@@ -262,7 +262,8 @@ int main()
 
         // render
         // ------
-		glClearColor(0.09f, 0.078f, 0.0f, 1.0f);
+        
+		glClearColor(0.039f, 0.071f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // be sure to activate shader when setting uniforms/drawing objects
